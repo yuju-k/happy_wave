@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "694452238656",
+    "project_id": "happywave-4e66e",
+    "storage_bucket": "happywave-4e66e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:694452238656:android:a5aa07a7a8b2727e1e22a5",
+        "android_client_info": {
+          "package_name": "com.example.happy_wave"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgP89ZFauCod5L5PgzKi6ga8NEdz0HwJ4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
