@@ -9,7 +9,18 @@ class SignUpPage extends StatelessWidget {
       child: TextField(
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide(color: Color(0xFF44C2D0)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide(color: Color(0xFF44C2D0)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide(color: Color(0xFF44C2D0), width: 2.0),
+          ),
           filled: true,
           fillColor: Colors.white,
         ),
@@ -18,7 +29,17 @@ class SignUpPage extends StatelessWidget {
   }
 
   Widget _button(String label) {
-    return ElevatedButton(onPressed: () {}, child: Text(label));
+    return ConstrainedBox(
+      constraints: BoxConstraints(minWidth: 350),
+      child: ElevatedButton(onPressed: () {}, child: Text(label)),
+    );
+  }
+
+  Widget _textButton(String label) {
+    return TextButton(
+      onPressed: () {},
+      child: Text(label, style: TextStyle(color: Color(0xFF05638A))),
+    );
   }
 
   Widget _logo() {
@@ -38,44 +59,46 @@ class SignUpPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Sign Up')),
-      body: Stack(
-        children: [
-          _logo(),
-          Padding(
-            padding: const EdgeInsets.only(top: 130.0),
-            child: Center(
-              child: Container(
-                width: 350,
-                height: 400,
-                decoration: BoxDecoration(
-                  color: Color(0xFFD8F3F1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '회원가입',
-                      style: TextStyle(
-                        color: Color(0xFF05638A),
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+      appBar: AppBar(),
+      body: SingleChildScrollView(
+        child: Stack(
+          children: [
+            _logo(),
+            Padding(
+              padding: const EdgeInsets.only(top: 260.0),
+              child: Center(
+                child: Container(
+                  width: 350,
+                  height: 400,
+                  decoration: BoxDecoration(
+                    color: Color(0xFFD8F3F1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '회원가입',
+                        style: TextStyle(
+                          color: Color(0xFF05638A),
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    _textField('이메일'),
-                    _textField('비밀번호'),
-                    _textField('비밀번호 확인'),
-                    _button('회원가입'),
-                    _button('로그인'),
-                  ],
+                      const SizedBox(height: 10),
+                      _textField('이메일'),
+                      _textField('비밀번호'),
+                      _textField('비밀번호 확인'),
+                      _button('회원가입'),
+                      _textButton('이미 계정이 있으신가요? 로그인하기'),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

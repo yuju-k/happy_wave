@@ -20,8 +20,8 @@ class MainApp extends StatelessWidget {
       theme: ThemeData(
         primaryColor: Color(0xFF44C2D0), // 앱바, 버튼 등의 기본 색상
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue, // 테마의 기본 색상 시드
-          primary: Colors.blue, // 주요 UI 요소 색상
+          seedColor: Color(0xFF44C2D0), // 테마의 기본 색상 시드
+          primary: Color(0xFF44C2D0), // 주요 UI 요소 색상
           secondary: Colors.blueAccent, // 보조 색상 (예: 플로팅 버튼)
           //배경 색깔 EDFFFE
           surface: Colors.white, // 배경 색상
