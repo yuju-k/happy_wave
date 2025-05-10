@@ -95,9 +95,10 @@ class _SignInPageState extends State<SignInPage> {
     if (!mounted) return;
 
     if (result == null) {
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
+        MaterialPageRoute(builder: (_) => const HomePage()),
+        (route) => false,
       );
     } else {
       ScaffoldMessenger.of(
