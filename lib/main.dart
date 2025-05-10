@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'firebase_options.dart';
 import 'home.dart';
 import 'auth/sign_up.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Flutter 바인딩 초기화
-  await Firebase.initializeApp(); // Firebase 초기화
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MainApp());
 }
 

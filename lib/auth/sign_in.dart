@@ -1,65 +1,111 @@
 import 'package:flutter/material.dart';
 import 'sign_up.dart';
+import 'reset_password.dart';
+import 'auth_firebase.dart';
+import '../home.dart';
 
-class SignInPage extends StatelessWidget {
+// 상수 정의
+const Color primaryColor = Color(0xFF44C2D0);
+const Color textColor = Color(0xFF05638A);
+const Color backgroundColor = Color(0xFFD8F3F1);
+const double containerWidth = 350.0;
+const double borderRadius = 20.0;
+
+class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
 
+  @override
+  State<SignInPage> createState() => _SignInPageState();
+}
+
+class _SignInPageState extends State<SignInPage> {
+  // 컨트롤러 및 서비스 초기화
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
+
+  // 텍스트 필드 스타일 정의
+  InputDecoration _textFieldDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(borderRadius),
+        borderSide: const BorderSide(color: primaryColor),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(borderRadius),
+        borderSide: const BorderSide(color: primaryColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(borderRadius),
+        borderSide: const BorderSide(color: primaryColor, width: 2.0),
+      ),
+      filled: true,
+      fillColor: Colors.white,
+    );
+  }
+
   // 텍스트 필드 위젯 생성
-  Widget _buildTextField(String label, {bool isPassword = false}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool isPassword = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextField(
+        controller: controller,
         obscureText: isPassword,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: Color(0xFF44C2D0)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: Color(0xFF44C2D0)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: Color(0xFF44C2D0), width: 2.0),
-          ),
-          filled: true,
-          fillColor: Colors.white,
-        ),
+        decoration: _textFieldDecoration(label),
       ),
     );
   }
 
-  // 버튼 위젯 생성
-  Widget _buildButton(String label) {
+  // 로그인 버튼 위젯 생성
+  Widget _buildSignInButton() {
     return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 350),
+      constraints: const BoxConstraints(minWidth: containerWidth),
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: _handleSignIn,
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(borderRadius),
           ),
         ),
-        child: Text(label, style: const TextStyle(fontSize: 16)),
+        child: const Text('로그인', style: TextStyle(fontSize: 16)),
       ),
     );
   }
 
+  // 로그인 처리 로직
+  Future<void> _handleSignIn() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    final result = await _authService.signIn(email, password);
+
+    if (!mounted) return;
+
+    if (result == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result)));
+    }
+  }
+
   // 텍스트 버튼 위젯 생성
-  Widget _buildTextButton(BuildContext context, String label) {
+  Widget _buildTextButton(String label, VoidCallback onPressed) {
     return TextButton(
-      onPressed: () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const SignUpPage()),
-        );
-      },
+      onPressed: onPressed,
       child: Text(
         label,
-        style: const TextStyle(color: Color(0xFF05638A), fontSize: 14),
+        style: const TextStyle(color: textColor, fontSize: 14),
       ),
     );
   }
@@ -71,11 +117,27 @@ class SignInPage extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.only(top: 15.0),
         child: Image.asset(
-          'assets/Happywave_logo(2).png',
+          'assets/Happywave_logo_2.png',
           width: 360,
           fit: BoxFit.cover,
         ),
       ),
+    );
+  }
+
+  // 로그인 폼 컨테이너 스타일
+  BoxDecoration _formContainerDecoration() {
+    return BoxDecoration(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(borderRadius),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withAlpha(50),
+          spreadRadius: 2,
+          blurRadius: 8,
+          offset: const Offset(0, 4),
+        ),
+      ],
     );
   }
 
@@ -91,39 +153,48 @@ class SignInPage extends StatelessWidget {
               padding: const EdgeInsets.only(top: 260.0),
               child: Center(
                 child: Container(
-                  width: 350,
+                  width: containerWidth,
                   padding: const EdgeInsets.all(24.0),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD8F3F1),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withAlpha(50),
-                        spreadRadius: 2,
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
+                  decoration: _formContainerDecoration(),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Text(
                         '로그인',
                         style: TextStyle(
-                          color: Color(0xFF05638A),
+                          color: textColor,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 16),
-                      _buildTextField('이메일'),
-                      _buildTextField('비밀번호', isPassword: true),
+                      _buildTextField('이메일', _emailController),
+                      _buildTextField(
+                        '비밀번호',
+                        _passwordController,
+                        isPassword: true,
+                      ),
                       const SizedBox(height: 16),
-                      _buildButton('로그인'),
+                      _buildSignInButton(),
                       const SizedBox(height: 8),
-                      _buildTextButton(context, '계정이 없으신가요? 회원가입하기'),
-                      _buildTextButton(context, '비밀번호를 잊으셨나요?'),
+                      _buildTextButton(
+                        '계정이 없으신가요? 회원가입하기',
+                        () => Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SignUpPage(),
+                          ),
+                        ),
+                      ),
+                      _buildTextButton(
+                        '비밀번호를 잊으셨나요?',
+                        () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ResetPasswordPage(),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

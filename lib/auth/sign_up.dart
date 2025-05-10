@@ -1,64 +1,123 @@
 import 'package:flutter/material.dart';
 import 'sign_in.dart';
+import 'auth_firebase.dart';
+import '../home.dart';
 
-class SignUpPage extends StatelessWidget {
+// 상수 정의
+const Color primaryColor = Color(0xFF44C2D0);
+const Color textColor = Color(0xFF05638A);
+const Color backgroundColor = Color(0xFFD8F3F1);
+const double containerWidth = 350.0;
+const double borderRadius = 20.0;
+
+class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
+  @override
+  State<SignUpPage> createState() => _SignUpPageState();
+}
+
+class _SignUpPageState extends State<SignUpPage> {
+  // 컨트롤러 및 서비스 초기화
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  final AuthService _authService = AuthService();
+
+  // 텍스트 필드 스타일 정의
+  InputDecoration _textFieldDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(borderRadius),
+        borderSide: const BorderSide(color: primaryColor),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(borderRadius),
+        borderSide: const BorderSide(color: primaryColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(borderRadius),
+        borderSide: const BorderSide(color: primaryColor, width: 2.0),
+      ),
+      filled: true,
+      fillColor: Colors.white,
+    );
+  }
+
   // 텍스트 필드 위젯 생성
-  Widget _buildTextField(String label) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool isPassword = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextField(
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: Color(0xFF44C2D0)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: Color(0xFF44C2D0)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: Color(0xFF44C2D0), width: 2.0),
-          ),
-          filled: true,
-          fillColor: Colors.white,
-        ),
+        controller: controller,
+        obscureText: isPassword,
+        decoration: _textFieldDecoration(label),
       ),
     );
   }
 
-  // 버튼 위젯 생성
-  Widget _buildButton(String label) {
+  // 회원가입 버튼 위젯 생성
+  Widget _buildSignUpButton() {
     return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 350),
+      constraints: const BoxConstraints(minWidth: containerWidth),
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: _handleSignUp,
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(borderRadius),
           ),
         ),
-        child: Text(label, style: const TextStyle(fontSize: 16)),
+        child: const Text('회원가입', style: TextStyle(fontSize: 16)),
       ),
     );
   }
 
+  // 회원가입 처리 로직
+  Future<void> _handleSignUp() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('비밀번호가 일치하지 않습니다.')));
+      return;
+    }
+
+    final result = await _authService.signUp(email, password);
+
+    if (!mounted) return;
+
+    if (result == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('회원가입 완료')));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result)));
+    }
+  }
+
   // 텍스트 버튼 위젯 생성
-  Widget _buildTextButton(BuildContext context, String label) {
+  Widget _buildTextButton(String label, VoidCallback onPressed) {
     return TextButton(
-      onPressed: () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const SignInPage()),
-        );
-      },
+      onPressed: onPressed,
       child: Text(
         label,
-        style: const TextStyle(color: Color(0xFF05638A), fontSize: 14),
+        style: const TextStyle(color: textColor, fontSize: 14),
       ),
     );
   }
@@ -78,6 +137,22 @@ class SignUpPage extends StatelessWidget {
     );
   }
 
+  // 회원가입 폼 컨테이너 스타일
+  BoxDecoration _formContainerDecoration() {
+    return BoxDecoration(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(borderRadius),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withAlpha(51),
+          spreadRadius: 2,
+          blurRadius: 8,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -90,39 +165,44 @@ class SignUpPage extends StatelessWidget {
               padding: const EdgeInsets.only(top: 260.0),
               child: Center(
                 child: Container(
-                  width: 350,
+                  width: containerWidth,
                   padding: const EdgeInsets.all(24.0),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD8F3F1),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withAlpha(51), // 20% opacity
-                        spreadRadius: 2,
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
+                  decoration: _formContainerDecoration(),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Text(
                         '회원가입',
                         style: TextStyle(
-                          color: Color(0xFF05638A),
+                          color: textColor,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 16),
-                      _buildTextField('이메일'),
-                      _buildTextField('비밀번호'),
-                      _buildTextField('비밀번호 확인'),
+                      _buildTextField('이메일', _emailController),
+                      _buildTextField(
+                        '비밀번호',
+                        _passwordController,
+                        isPassword: true,
+                      ),
+                      _buildTextField(
+                        '비밀번호 확인',
+                        _confirmPasswordController,
+                        isPassword: true,
+                      ),
                       const SizedBox(height: 16),
-                      _buildButton('회원가입'),
+                      _buildSignUpButton(),
                       const SizedBox(height: 8),
-                      _buildTextButton(context, '이미 계정이 있으신가요? 로그인하기'),
+                      _buildTextButton(
+                        '이미 계정이 있으신가요? 로그인하기',
+                        () => Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SignInPage(),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
