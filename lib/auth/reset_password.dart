@@ -20,6 +20,12 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final TextEditingController _emailController = TextEditingController();
   final AuthService _authService = AuthService();
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
   // 텍스트 필드 스타일 정의
   InputDecoration _textFieldDecoration(String label) {
     return InputDecoration(

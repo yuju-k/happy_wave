@@ -1,8 +1,11 @@
-// auth_firebase.dart
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  static const String _usersCollection = 'users';
 
   // 회원가입
   Future<String?> signUp(String email, String password) async {
@@ -11,9 +14,21 @@ class AuthService {
         email: email,
         password: password,
       );
+
+      await _firestore
+          .collection(_usersCollection)
+          .doc(_auth.currentUser?.uid)
+          .set({
+            'email': email,
+            'createdAt': FieldValue.serverTimestamp(),
+            'role': 'user',
+          });
+
       return null; // 성공 시 에러 없음
     } on FirebaseAuthException catch (e) {
       return e.message;
+    } catch (e) {
+      return '회원가입 중 오류가 발생했습니다.';
     }
   }
 
