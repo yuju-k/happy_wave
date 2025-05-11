@@ -121,4 +121,9 @@ class InviteService {
 
     return null;
   }
+
+  Future<String> getEmailByUid(String uid) async {
+    final doc = await _firestore.collection('users').doc(uid).get();
+    return doc.data()?['email'] ?? '알 수 없음';
+  }
 }

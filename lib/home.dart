@@ -5,6 +5,7 @@ import 'auth/auth_firebase.dart';
 import 'profile/profile.dart';
 import 'system_log.dart';
 import 'connect/invite_user.dart';
+import 'connect/invite_alert.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,6 +23,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _checkNameExists();
     _logUserLogin();
+    InviteAlertListener.startListening(context);
   }
 
   Future<void> _logUserLogin() async {
