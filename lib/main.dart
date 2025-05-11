@@ -33,7 +33,7 @@ class MainApp extends StatelessWidget {
           seedColor: Color(0xFF44C2D0),
           primary: Color(0xFF44C2D0),
           secondary: Colors.blueAccent,
-          surface: Colors.white,
+          surface: Color(0xFFD8F3F1),
         ),
         textTheme: const TextTheme(
           headlineSmall: TextStyle(
@@ -74,7 +74,7 @@ class MainApp extends StatelessWidget {
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF44C2D0),
-          foregroundColor: Colors.white,
+          foregroundColor: Color(0xFF05638A),
         ),
       ),
 

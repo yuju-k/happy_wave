@@ -121,7 +121,7 @@ class _SignInPageState extends State<SignInPage> {
   // 로그인 폼 컨테이너 스타일
   BoxDecoration _formContainerDecoration() {
     return BoxDecoration(
-      color: backgroundColor,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(16.0),
       boxShadow: [
         BoxShadow(

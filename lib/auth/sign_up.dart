@@ -106,7 +106,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   BoxDecoration _formContainerDecoration() {
     return BoxDecoration(
-      color: backgroundColor,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(20),
       boxShadow: [
         BoxShadow(

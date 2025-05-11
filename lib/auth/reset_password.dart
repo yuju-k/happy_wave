@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'auth_firebase.dart';
 
 // 상수 정의
-const Color primaryColor = Color(0xFF44C2D0);
-const Color textColor = Color(0xFF44C2D0);
-const Color backgroundColor = Color(0xFFD8F3F1);
 const double containerWidth = 350.0;
 const double borderRadius = 20.0;
 
@@ -26,27 +23,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     super.dispose();
   }
 
-  // 텍스트 필드 스타일 정의
-  InputDecoration _textFieldDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(borderRadius),
-        borderSide: const BorderSide(color: primaryColor),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(borderRadius),
-        borderSide: const BorderSide(color: primaryColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(borderRadius),
-        borderSide: const BorderSide(color: primaryColor, width: 2.0),
-      ),
-      filled: true,
-      fillColor: Colors.white,
-    );
-  }
-
   // 텍스트 필드 위젯 생성
   Widget _buildTextField() {
     return Padding(
@@ -54,7 +30,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       child: TextField(
         controller: _emailController,
         keyboardType: TextInputType.emailAddress,
-        decoration: _textFieldDecoration('이메일'),
+        decoration: const InputDecoration(labelText: '이메일'),
       ),
     );
   }
@@ -65,17 +41,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       constraints: const BoxConstraints(minWidth: containerWidth),
       child: ElevatedButton(
         onPressed: _handleResetPassword,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: textColor,
-          padding: const EdgeInsets.symmetric(vertical: 16.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(borderRadius),
-          ),
-        ),
-        child: const Text(
-          '비밀번호 재설정 메일 보내기',
-          style: TextStyle(fontSize: 14, color: Colors.white),
-        ),
+        child: const Text('비밀번호 재설정 메일 보내기', style: TextStyle(fontSize: 15)),
       ),
     );
   }
@@ -112,7 +78,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   // 폼 컨테이너 스타일
   BoxDecoration _formContainerDecoration() {
     return BoxDecoration(
-      color: backgroundColor,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(borderRadius),
       boxShadow: [
         BoxShadow(
@@ -128,11 +94,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: textColor),
-      ),
+      appBar: AppBar(elevation: 0, backgroundColor: Colors.transparent),
       body: SingleChildScrollView(
         child: Center(
           child: Padding(
@@ -147,18 +109,14 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     '비밀번호 재설정',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     '가입한 이메일 주소를 입력하면\n비밀번호 재설정 메일을 보내드립니다.',
-                    style: TextStyle(fontSize: 14),
+                    style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
