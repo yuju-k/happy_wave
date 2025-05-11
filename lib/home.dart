@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'auth/auth_firebase.dart';
-import 'auth/sign_in.dart';
-import 'profile/profile.dart'; // ProfilePage import 필요
+import 'profile/profile.dart';
+import 'system_log.dart';
+import 'connect/connect_other.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,10 +13,21 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  int _selectedIndex = 0;
+
   @override
   void initState() {
     super.initState();
     _checkNameExists();
+    _logUserLogin();
+  }
+
+  Future<void> _logUserLogin() async {
+    final user = AuthService().currentUser;
+    if (user != null) {
+      final logService = SystemLogService();
+      await logService.logLogin(user.uid);
+    }
   }
 
   Future<void> _checkNameExists() async {
@@ -37,38 +49,33 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final List<Widget> pages = [
+      TemporaryComponent(),
+      TemporaryComponent(),
+      const ProfilePage(),
+    ];
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await AuthService().signOut();
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const SignInPage()),
-              );
-            },
+      body: pages[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_rounded),
+            label: '대화',
           ),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
         ],
-      ),
-      body: Center(
-        child: Column(
-          children: [
-            const Text('이 페이지는 home입니다.', style: TextStyle(fontSize: 20)),
-            const SizedBox(height: 20),
-            // 프로필버튼
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/profile');
-              },
-              child: const Text('프로필 보기'),
-            ),
-          ],
-        ),
       ),
     );
   }
