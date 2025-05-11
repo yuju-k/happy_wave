@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:happy_wave/settings.dart';
 import 'auth/auth_firebase.dart';
 import 'profile/profile.dart';
 import 'system_log.dart';
-import 'connect/connect_other.dart';
 import 'connect/invite_user.dart';
 
 class HomePage extends StatefulWidget {
@@ -15,6 +15,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  bool _isConnected = false;
 
   @override
   void initState() {
@@ -51,6 +52,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _onItemTapped(int index) {
+    if (!_isConnected && index == 1) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("상대방과 연결되어야 채팅이 가능합니다.")));
+      return;
+    }
+
     setState(() {
       _selectedIndex = index;
     });
@@ -61,7 +69,7 @@ class _HomePageState extends State<HomePage> {
     final List<Widget> pages = [
       _buildHomeTab(),
       const ProfilePage(),
-      const ProfilePage(),
+      const SettingsPage(),
     ];
 
     return Scaffold(
@@ -99,9 +107,18 @@ class _HomePageState extends State<HomePage> {
         }
 
         final data = snapshot.data!.data() as Map<String, dynamic>?;
-        final isConnected = data?['connect_status'] == true;
+        final connected = data?['connect_status'] == true;
 
-        if (!isConnected) {
+        // 상태 업데이트
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _isConnected != connected) {
+            setState(() {
+              _isConnected = connected;
+            });
+          }
+        });
+
+        if (!_isConnected) {
           return InviteUserPage(); // 연결 안 된 상태
         }
 
