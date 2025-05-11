@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:happy_wave/auth/reset_password.dart';
 import 'auth_firebase.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -123,50 +122,57 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(elevation: 0, backgroundColor: Colors.transparent),
-      body: SingleChildScrollView(
-        child: Stack(
-          children: [
-            _buildLogo(),
-            Padding(
-              padding: const EdgeInsets.only(top: 260.0),
-              child: Center(
-                child: Container(
-                  width: 350.0,
-                  padding: const EdgeInsets.all(24.0),
-                  decoration: _formContainerDecoration(),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '회원가입',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField('이메일', _emailController),
-                      _buildTextField(
-                        '비밀번호',
-                        _passwordController,
-                        isPassword: true,
-                      ),
-                      _buildTextField(
-                        '비밀번호 확인',
-                        _confirmPasswordController,
-                        isPassword: true,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildSignUpButton(),
-                      const SizedBox(height: 8),
-                      _buildTextButton(
-                        '이미 계정이 있으신가요? 로그인하기',
-                        () =>
-                            Navigator.pushReplacementNamed(context, '/sign-in'),
-                      ),
-                    ],
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: SingleChildScrollView(
+          child: Stack(
+            children: [
+              _buildLogo(),
+              Padding(
+                padding: const EdgeInsets.only(top: 260.0),
+                child: Center(
+                  child: Container(
+                    width: 350.0,
+                    padding: const EdgeInsets.all(24.0),
+                    decoration: _formContainerDecoration(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '회원가입',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField('이메일', _emailController),
+                        _buildTextField(
+                          '비밀번호',
+                          _passwordController,
+                          isPassword: true,
+                        ),
+                        _buildTextField(
+                          '비밀번호 확인',
+                          _confirmPasswordController,
+                          isPassword: true,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSignUpButton(),
+                        const SizedBox(height: 8),
+                        _buildTextButton(
+                          '이미 계정이 있으신가요? 로그인하기',
+                          () => Navigator.pushReplacementNamed(
+                            context,
+                            '/sign-in',
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -73,8 +73,10 @@ class MainApp extends StatelessWidget {
           fillColor: Colors.white,
         ),
         appBarTheme: const AppBarTheme(
+          //배경색 없음 . 투명
           backgroundColor: Color(0xFF44C2D0),
           foregroundColor: Color(0xFF05638A),
+          titleTextStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
       ),
 

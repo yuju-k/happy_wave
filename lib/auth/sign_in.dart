@@ -138,57 +138,64 @@ class _SignInPageState extends State<SignInPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(elevation: 0, backgroundColor: Colors.transparent),
-      body: SingleChildScrollView(
-        child: Stack(
-          children: [
-            _buildLogo(),
-            Padding(
-              padding: const EdgeInsets.only(top: 260.0),
-              child: Center(
-                child: Container(
-                  width: containerWidth,
-                  padding: const EdgeInsets.all(24.0),
-                  decoration: _formContainerDecoration(),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        '로그인',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField('이메일', _emailController),
-                      _buildTextField(
-                        '비밀번호',
-                        _passwordController,
-                        isPassword: true,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildSignInButton(),
-                      const SizedBox(height: 8),
-                      _buildTextButton(
-                        '계정이 없으신가요? 회원가입하기',
-                        () =>
-                            Navigator.pushReplacementNamed(context, '/sign-up'),
-                      ),
-                      _buildTextButton(
-                        '비밀번호를 잊으셨나요?',
-                        () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ResetPasswordPage(),
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: SingleChildScrollView(
+          child: Stack(
+            children: [
+              _buildLogo(),
+              Padding(
+                padding: const EdgeInsets.only(top: 260.0),
+                child: Center(
+                  child: Container(
+                    width: containerWidth,
+                    padding: const EdgeInsets.all(24.0),
+                    decoration: _formContainerDecoration(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          '로그인',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        _buildTextField('이메일', _emailController),
+                        _buildTextField(
+                          '비밀번호',
+                          _passwordController,
+                          isPassword: true,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSignInButton(),
+                        const SizedBox(height: 8),
+                        _buildTextButton(
+                          '계정이 없으신가요? 회원가입하기',
+                          () => Navigator.pushReplacementNamed(
+                            context,
+                            '/sign-up',
+                          ),
+                        ),
+                        _buildTextButton(
+                          '비밀번호를 잊으셨나요?',
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ResetPasswordPage(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

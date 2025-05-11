@@ -95,35 +95,40 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(elevation: 0, backgroundColor: Colors.transparent),
-      body: SingleChildScrollView(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 80.0,
-              horizontal: 24.0,
-            ),
-            child: Container(
-              width: containerWidth,
-              padding: const EdgeInsets.all(24.0),
-              decoration: _formContainerDecoration(),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '비밀번호 재설정',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '가입한 이메일 주소를 입력하면\n비밀번호 재설정 메일을 보내드립니다.',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  _buildTextField(),
-                  const SizedBox(height: 24),
-                  _buildResetButton(),
-                ],
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: SingleChildScrollView(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: 80.0,
+                horizontal: 24.0,
+              ),
+              child: Container(
+                width: containerWidth,
+                padding: const EdgeInsets.all(24.0),
+                decoration: _formContainerDecoration(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '비밀번호 재설정',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '가입한 이메일 주소를 입력하면\n비밀번호 재설정 메일을 보내드립니다.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    _buildTextField(),
+                    const SizedBox(height: 24),
+                    _buildResetButton(),
+                  ],
+                ),
               ),
             ),
           ),
