@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:happy_wave/auth/reset_password.dart';
 import 'auth_firebase.dart';
-import '../theme_constants.dart' as theme_constants;
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -10,7 +10,6 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  // 컨트롤러 및 서비스 초기화
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -25,28 +24,12 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
-  // 텍스트 필드 스타일 정의
   InputDecoration _textFieldDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(theme_constants.borderRadius),
-        borderSide: BorderSide(color: theme_constants.primaryColor),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(theme_constants.borderRadius),
-        borderSide: BorderSide(color: theme_constants.primaryColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(theme_constants.borderRadius),
-        borderSide: BorderSide(color: theme_constants.primaryColor, width: 2.0),
-      ),
-      filled: true,
-      fillColor: Colors.white,
-    );
+    ).applyDefaults(Theme.of(context).inputDecorationTheme);
   }
 
-  // 텍스트 필드 위젯 생성
   Widget _buildTextField(
     String label,
     TextEditingController controller, {
@@ -62,25 +45,16 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  // 회원가입 버튼 위젯 생성
   Widget _buildSignUpButton() {
-    const double containerWidth = 350.0; // 원하는 너비로 수정하세요
     return ConstrainedBox(
-      constraints: BoxConstraints(minWidth: containerWidth),
+      constraints: const BoxConstraints(minWidth: 350.0),
       child: ElevatedButton(
         onPressed: _handleSignUp,
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(theme_constants.borderRadius),
-          ),
-        ),
         child: const Text('회원가입', style: TextStyle(fontSize: 16)),
       ),
     );
   }
 
-  // 회원가입 처리 로직
   Future<void> _handleSignUp() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
@@ -101,11 +75,7 @@ class _SignUpPageState extends State<SignUpPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('회원가입 완료')));
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/home',
-        (route) => false, // 이전 모든 라우트 제거
-      );
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
     } else {
       ScaffoldMessenger.of(
         context,
@@ -113,18 +83,13 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 
-  // 텍스트 버튼 위젯 생성
   Widget _buildTextButton(String label, VoidCallback onPressed) {
     return TextButton(
       onPressed: onPressed,
-      child: Text(
-        label,
-        style: TextStyle(color: theme_constants.textColor, fontSize: 14),
-      ),
+      child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
     );
   }
 
-  // 로고 위젯 생성
   Widget _buildLogo() {
     return Align(
       alignment: Alignment.topCenter,
@@ -139,11 +104,10 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  // 회원가입 폼 컨테이너 스타일
   BoxDecoration _formContainerDecoration() {
     return BoxDecoration(
-      color: theme_constants.backgroundColor,
-      borderRadius: BorderRadius.circular(theme_constants.borderRadius),
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(20),
       boxShadow: [
         BoxShadow(
           color: Colors.grey.withAlpha(51),
@@ -173,13 +137,9 @@ class _SignUpPageState extends State<SignUpPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
+                      Text(
                         '회원가입',
-                        style: TextStyle(
-                          color: theme_constants.textColor,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField('이메일', _emailController),

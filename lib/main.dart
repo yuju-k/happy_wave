@@ -27,45 +27,57 @@ class MainApp extends StatelessWidget {
         '/sign-up': (context) => const SignUpPage(),
         '/profile': (context) => const ProfilePage(),
       },
-
       theme: ThemeData(
-        primaryColor: Color(0xFF44C2D0), // 앱바, 버튼 등의 기본 색상
+        scaffoldBackgroundColor: const Color(0xFFEDFFFE),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Color(0xFF44C2D0), // 테마의 기본 색상 시드
-          primary: Color(0xFF44C2D0), // 주요 UI 요소 색상
-          secondary: Colors.blueAccent, // 보조 색상 (예: 플로팅 버튼)
-          //배경 색깔 EDFFFE
-          surface: Colors.white, // 배경 색상
+          seedColor: Color(0xFF44C2D0),
+          primary: Color(0xFF44C2D0),
+          secondary: Colors.blueAccent,
+          surface: Colors.white,
         ),
-        scaffoldBackgroundColor: Color(0xFFEDFFFE), // Scaffold 배경 색상
-        // 텍스트 스타일 설정
         textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: Colors.black87),
-          bodyMedium: TextStyle(color: Colors.black87),
-        ),
-        // ElevatedButton 스타일 설정
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFF44C2D0), // 버튼 배경 색상
-            foregroundColor: Colors.white, // 버튼 텍스트/아이콘 색상
+          headlineSmall: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF05638A), // headingTextStyle
+          ),
+          bodyMedium: TextStyle(
+            fontSize: 16,
+            color: Color(0xFF05638A), // bodyTextStyle
           ),
         ),
-        // AppBar 스타일 설정
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Color(0xFF44C2D0),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20), // borderRadius
+            ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: const BorderSide(color: Color(0xFF44C2D0)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: const BorderSide(color: Color(0xFF44C2D0)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: const BorderSide(color: Color(0xFF44C2D0), width: 2),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+        ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF44C2D0),
-          foregroundColor: Colors.white, // AppBar 텍스트/아이콘 색상
+          foregroundColor: Colors.white,
         ),
       ),
-      // 다크 모드 테마 (선택)
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: Colors.blueGrey,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blueGrey,
-          brightness: Brightness.dark,
-        ),
-        scaffoldBackgroundColor: Colors.grey[900],
-      ),
+
       themeMode: ThemeMode.system, // 시스템 설정에 따라 테마 전환
     );
   }

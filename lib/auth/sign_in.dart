@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'reset_password.dart';
 import 'auth_firebase.dart';
-import '../theme_constants.dart' as theme_constants;
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -25,22 +24,17 @@ class _SignInPageState extends State<SignInPage> {
 
   // 텍스트 필드 스타일 정의
   InputDecoration _textFieldDecoration(String label) {
+    final theme = Theme.of(context).inputDecorationTheme;
     return InputDecoration(
       labelText: label,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(theme_constants.borderRadius),
-        borderSide: const BorderSide(color: primaryColor),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(borderRadius),
-        borderSide: const BorderSide(color: primaryColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(theme_constants.borderRadius),
-        borderSide: const BorderSide(color: primaryColor, width: 2.0),
-      ),
-      filled: true,
-      fillColor: Colors.white,
+      border: theme.border,
+      enabledBorder: theme.enabledBorder,
+      focusedBorder: theme.focusedBorder,
+      errorBorder: theme.errorBorder,
+      focusedErrorBorder: theme.focusedErrorBorder,
+      fillColor: theme.fillColor,
+      filled: theme.filled,
+      // Add other properties from theme if needed
     );
   }
 
@@ -69,7 +63,9 @@ class _SignInPageState extends State<SignInPage> {
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(theme_constants.borderRadius),
+            borderRadius: BorderRadius.circular(
+              16.0,
+            ), // Replace 16.0 with your desired border radius value
           ),
         ),
         child: const Text('로그인', style: TextStyle(fontSize: 16)),
@@ -103,10 +99,7 @@ class _SignInPageState extends State<SignInPage> {
   Widget _buildTextButton(String label, VoidCallback onPressed) {
     return TextButton(
       onPressed: onPressed,
-      child: Text(
-        label,
-        style: const TextStyle(color: textColor, fontSize: 14),
-      ),
+      child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
     );
   }
 
@@ -129,7 +122,7 @@ class _SignInPageState extends State<SignInPage> {
   BoxDecoration _formContainerDecoration() {
     return BoxDecoration(
       color: backgroundColor,
-      borderRadius: BorderRadius.circular(theme_constants.borderRadius),
+      borderRadius: BorderRadius.circular(16.0),
       boxShadow: [
         BoxShadow(
           color: Colors.grey.withAlpha(50),
@@ -162,7 +155,6 @@ class _SignInPageState extends State<SignInPage> {
                       const Text(
                         '로그인',
                         style: TextStyle(
-                          color: textColor,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
