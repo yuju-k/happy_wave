@@ -55,8 +55,20 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: const Center(
-        child: Text('이 페이지는 home입니다.', style: TextStyle(fontSize: 20)),
+      body: Center(
+        child: Column(
+          children: [
+            const Text('이 페이지는 home입니다.', style: TextStyle(fontSize: 20)),
+            const SizedBox(height: 20),
+            // 프로필버튼
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/profile');
+              },
+              child: const Text('프로필 보기'),
+            ),
+          ],
+        ),
       ),
     );
   }

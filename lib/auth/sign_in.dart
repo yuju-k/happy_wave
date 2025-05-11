@@ -1,15 +1,7 @@
 import 'package:flutter/material.dart';
-import 'sign_up.dart';
 import 'reset_password.dart';
 import 'auth_firebase.dart';
-import '../home.dart';
-
-// 상수 정의
-const Color primaryColor = Color(0xFF44C2D0);
-const Color textColor = Color(0xFF05638A);
-const Color backgroundColor = Color(0xFFD8F3F1);
-const double containerWidth = 350.0;
-const double borderRadius = 20.0;
+import '../theme_constants.dart' as theme_constants;
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -36,7 +28,7 @@ class _SignInPageState extends State<SignInPage> {
     return InputDecoration(
       labelText: label,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(borderRadius),
+        borderRadius: BorderRadius.circular(theme_constants.borderRadius),
         borderSide: const BorderSide(color: primaryColor),
       ),
       enabledBorder: OutlineInputBorder(
@@ -44,7 +36,7 @@ class _SignInPageState extends State<SignInPage> {
         borderSide: const BorderSide(color: primaryColor),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(borderRadius),
+        borderRadius: BorderRadius.circular(theme_constants.borderRadius),
         borderSide: const BorderSide(color: primaryColor, width: 2.0),
       ),
       filled: true,
@@ -77,7 +69,7 @@ class _SignInPageState extends State<SignInPage> {
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(borderRadius),
+            borderRadius: BorderRadius.circular(theme_constants.borderRadius),
           ),
         ),
         child: const Text('로그인', style: TextStyle(fontSize: 16)),
@@ -95,10 +87,10 @@ class _SignInPageState extends State<SignInPage> {
     if (!mounted) return;
 
     if (result == null) {
-      Navigator.pushAndRemoveUntil(
+      Navigator.pushNamedAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-        (route) => false,
+        '/home', // 이동할 경로 이름
+        (route) => false, // 이전 모든 라우트 제거
       );
     } else {
       ScaffoldMessenger.of(
@@ -137,7 +129,7 @@ class _SignInPageState extends State<SignInPage> {
   BoxDecoration _formContainerDecoration() {
     return BoxDecoration(
       color: backgroundColor,
-      borderRadius: BorderRadius.circular(borderRadius),
+      borderRadius: BorderRadius.circular(theme_constants.borderRadius),
       boxShadow: [
         BoxShadow(
           color: Colors.grey.withAlpha(50),
@@ -187,12 +179,8 @@ class _SignInPageState extends State<SignInPage> {
                       const SizedBox(height: 8),
                       _buildTextButton(
                         '계정이 없으신가요? 회원가입하기',
-                        () => Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SignUpPage(),
-                          ),
-                        ),
+                        () =>
+                            Navigator.pushReplacementNamed(context, '/sign-up'),
                       ),
                       _buildTextButton(
                         '비밀번호를 잊으셨나요?',

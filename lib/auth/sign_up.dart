@@ -1,14 +1,6 @@
 import 'package:flutter/material.dart';
-import 'sign_in.dart';
 import 'auth_firebase.dart';
-import '../home.dart';
-
-// 상수 정의
-const Color primaryColor = Color(0xFF44C2D0);
-const Color textColor = Color(0xFF05638A);
-const Color backgroundColor = Color(0xFFD8F3F1);
-const double containerWidth = 350.0;
-const double borderRadius = 20.0;
+import '../theme_constants.dart' as theme_constants;
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -38,16 +30,16 @@ class _SignUpPageState extends State<SignUpPage> {
     return InputDecoration(
       labelText: label,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(borderRadius),
-        borderSide: const BorderSide(color: primaryColor),
+        borderRadius: BorderRadius.circular(theme_constants.borderRadius),
+        borderSide: BorderSide(color: theme_constants.primaryColor),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(borderRadius),
-        borderSide: const BorderSide(color: primaryColor),
+        borderRadius: BorderRadius.circular(theme_constants.borderRadius),
+        borderSide: BorderSide(color: theme_constants.primaryColor),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(borderRadius),
-        borderSide: const BorderSide(color: primaryColor, width: 2.0),
+        borderRadius: BorderRadius.circular(theme_constants.borderRadius),
+        borderSide: BorderSide(color: theme_constants.primaryColor, width: 2.0),
       ),
       filled: true,
       fillColor: Colors.white,
@@ -72,14 +64,15 @@ class _SignUpPageState extends State<SignUpPage> {
 
   // 회원가입 버튼 위젯 생성
   Widget _buildSignUpButton() {
+    const double containerWidth = 350.0; // 원하는 너비로 수정하세요
     return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: containerWidth),
+      constraints: BoxConstraints(minWidth: containerWidth),
       child: ElevatedButton(
         onPressed: _handleSignUp,
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(borderRadius),
+            borderRadius: BorderRadius.circular(theme_constants.borderRadius),
           ),
         ),
         child: const Text('회원가입', style: TextStyle(fontSize: 16)),
@@ -108,10 +101,10 @@ class _SignUpPageState extends State<SignUpPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('회원가입 완료')));
-      Navigator.pushAndRemoveUntil(
+      Navigator.pushNamedAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-        (route) => false,
+        '/home',
+        (route) => false, // 이전 모든 라우트 제거
       );
     } else {
       ScaffoldMessenger.of(
@@ -126,7 +119,7 @@ class _SignUpPageState extends State<SignUpPage> {
       onPressed: onPressed,
       child: Text(
         label,
-        style: const TextStyle(color: textColor, fontSize: 14),
+        style: TextStyle(color: theme_constants.textColor, fontSize: 14),
       ),
     );
   }
@@ -149,8 +142,8 @@ class _SignUpPageState extends State<SignUpPage> {
   // 회원가입 폼 컨테이너 스타일
   BoxDecoration _formContainerDecoration() {
     return BoxDecoration(
-      color: backgroundColor,
-      borderRadius: BorderRadius.circular(borderRadius),
+      color: theme_constants.backgroundColor,
+      borderRadius: BorderRadius.circular(theme_constants.borderRadius),
       boxShadow: [
         BoxShadow(
           color: Colors.grey.withAlpha(51),
@@ -174,7 +167,7 @@ class _SignUpPageState extends State<SignUpPage> {
               padding: const EdgeInsets.only(top: 260.0),
               child: Center(
                 child: Container(
-                  width: containerWidth,
+                  width: 350.0,
                   padding: const EdgeInsets.all(24.0),
                   decoration: _formContainerDecoration(),
                   child: Column(
@@ -183,7 +176,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       const Text(
                         '회원가입',
                         style: TextStyle(
-                          color: textColor,
+                          color: theme_constants.textColor,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
@@ -205,12 +198,8 @@ class _SignUpPageState extends State<SignUpPage> {
                       const SizedBox(height: 8),
                       _buildTextButton(
                         '이미 계정이 있으신가요? 로그인하기',
-                        () => Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SignInPage(),
-                          ),
-                        ),
+                        () =>
+                            Navigator.pushReplacementNamed(context, '/sign-in'),
                       ),
                     ],
                   ),

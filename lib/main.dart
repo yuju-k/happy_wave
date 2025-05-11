@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'home.dart';
 import 'auth/sign_up.dart';
+import 'auth/sign_in.dart';
+import 'profile/profile.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Flutter 바인딩 초기화
@@ -17,7 +19,15 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: const MainPage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const MainPage(),
+        '/home': (context) => const HomePage(),
+        '/sign-in': (context) => const SignInPage(),
+        '/sign-up': (context) => const SignUpPage(),
+        '/profile': (context) => const ProfilePage(),
+      },
+
       theme: ThemeData(
         primaryColor: Color(0xFF44C2D0), // 앱바, 버튼 등의 기본 색상
         colorScheme: ColorScheme.fromSeed(
@@ -73,12 +83,15 @@ class MainPage extends StatelessWidget {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
-        } else if (snapshot.hasData) {
-          // User is logged in
-          return const HomePage();
         } else {
-          // User is not logged in
-          return const SignUpPage();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (snapshot.hasData) {
+              Navigator.pushReplacementNamed(context, '/home');
+            } else {
+              Navigator.pushReplacementNamed(context, '/sign-up');
+            }
+          });
+          return const SizedBox.shrink(); // 전환 중 빈 화면 처리
         }
       },
     );
