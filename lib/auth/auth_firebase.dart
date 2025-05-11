@@ -19,6 +19,7 @@ class AuthService {
           .collection(_usersCollection)
           .doc(_auth.currentUser?.uid)
           .set({
+            'uid': _auth.currentUser?.uid,
             'email': email,
             'createdAt': FieldValue.serverTimestamp(),
             'role': 'user',

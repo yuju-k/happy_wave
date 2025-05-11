@@ -4,6 +4,7 @@ import 'auth/auth_firebase.dart';
 import 'profile/profile.dart';
 import 'system_log.dart';
 import 'connect/connect_other.dart';
+import 'connect/invite_user.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -58,8 +59,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
-      TemporaryComponent(),
-      TemporaryComponent(),
+      _buildHomeTab(),
+      const ProfilePage(),
       const ProfilePage(),
     ];
 
@@ -78,5 +79,38 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
+
+  Widget _buildHomeTab() {
+    final user = AuthService().currentUser;
+    if (user == null) {
+      return const Center(child: Text("로그인이 필요합니다."));
+    }
+
+    final userDoc = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: userDoc.snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final data = snapshot.data!.data() as Map<String, dynamic>?;
+        final isConnected = data?['connect_status'] == true;
+
+        if (!isConnected) {
+          return InviteUserPage(); // 연결 안 된 상태
+        }
+
+        return _buildConnectedHome(); // 연결된 홈 콘텐츠 표시
+      },
+    );
+  }
+
+  Widget _buildConnectedHome() {
+    return const Center(child: Text("공유된 HOME 화면입니다 😊"));
   }
 }
