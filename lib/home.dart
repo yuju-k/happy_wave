@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'auth/auth_firebase.dart';
 import 'auth/sign_in.dart';
-import 'profile.dart'; // ProfilePage import 필요
+import 'profile/profile.dart'; // ProfilePage import 필요
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
