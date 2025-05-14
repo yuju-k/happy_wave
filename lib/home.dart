@@ -55,10 +55,18 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _onItemTapped(int index) {
-    if (!_isConnected && index == 1) {
-      ScaffoldMessenger.of(
+    if (index == 1) {
+      // 대화 탭 클릭 시 ChatPage로 이동
+      if (!_isConnected) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("상대방과 연결되어야 채팅이 가능합니다.")));
+        return;
+      }
+      Navigator.push(
         context,
-      ).showSnackBar(const SnackBar(content: Text("상대방과 연결되어야 채팅이 가능합니다.")));
+        MaterialPageRoute(builder: (context) => const ChatPage()),
+      );
       return;
     }
 
@@ -71,7 +79,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       _buildHomeTab(),
-      ChatPage(),
+      _NullPage(),
       const SettingsPage(),
     ];
 
@@ -132,5 +140,9 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildConnectedHome() {
     return const Center(child: Text("공유된 HOME 화면입니다 😊"));
+  }
+
+  Widget _NullPage() {
+    return const Center(child: Text("😊"));
   }
 }
