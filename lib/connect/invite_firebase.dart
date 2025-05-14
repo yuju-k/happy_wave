@@ -97,6 +97,18 @@ class InviteService {
       'pendingInvites': FieldValue.arrayRemove([fromUid]),
     }, SetOptions(merge: true));
 
+    // 4. 채팅방 생성 (초대 수락 시 자동)
+    final chatroomRef = _firestore.collection('chatrooms').doc(homeId);
+    await chatroomRef.set({
+      'users': [fromUid, toUid],
+      'createdAt': FieldValue.serverTimestamp(),
+      'lastMessage': null, // 초기에는 메시지 없음
+    });
+
+    // 5. 나와 상대방 문서에 채팅방 고유 ID 추가
+    await fromRef.set({'chatroomId': homeId}, SetOptions(merge: true));
+    await toRef.set({'chatroomId': homeId}, SetOptions(merge: true));
+
     return null;
   }
 

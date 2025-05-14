@@ -6,6 +6,7 @@ import 'profile/profile.dart';
 import 'system_log.dart';
 import 'connect/invite_user.dart';
 import 'connect/invite_alert.dart';
+import 'chat/chat_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -70,7 +71,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       _buildHomeTab(),
-      const ProfilePage(),
+      ChatPage(),
       const SettingsPage(),
     ];
 
