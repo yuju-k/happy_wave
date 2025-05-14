@@ -8,7 +8,7 @@ import 'auth/sign_in.dart';
 import 'profile/profile.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Flutter 바인딩 초기화
+  WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MainApp());
 }
