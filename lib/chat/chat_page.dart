@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
-import 'chatroom_connect.dart';
-
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
 
