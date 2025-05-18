@@ -49,7 +49,7 @@ class ChatInputState extends State<ChatInput> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
       child: TextField(
         controller: _controller,
         decoration: InputDecoration(
