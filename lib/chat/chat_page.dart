@@ -1,10 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'services/message_service.dart';
 import 'services/user_service.dart';
-import 'widgets/chat_widget.dart';
-import 'widgets/user_info_widget.dart';
+import 'widgets/chat_input.dart';
+import 'widgets/chat_output.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -16,14 +15,14 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   String? _chatRoomId;
   String? _myName;
-  String? _myProfileImage;
+  //String? _myProfileImage;
   String? _otherUserName;
   String? _otherProfileImage;
-  final List<types.Message> _messages = [];
+  //final List<types.Message> _messages = [];
   bool _isLoading = true;
   final _auth = FirebaseAuth.instance;
   final _userService = UserService();
-  final _messageService = MessageService();
+  //final _messageService = MessageService();
 
   @override
   void initState() {
@@ -67,24 +66,24 @@ class _ChatPageState extends State<ChatPage> {
     setState(() {
       _chatRoomId = roomId;
       _myName = myProfile?['name'] ?? '익명 사용자';
-      _myProfileImage = myProfile?['profileImageUrl'];
+      //_myProfileImage = myProfile?['profileImageUrl'];
       _otherUserName = otherUserInfo?['name'] ?? '알 수 없는 사용자';
       _otherProfileImage = otherUserInfo?['profileImageUrl'];
       _isLoading = false;
     });
 
-    _subscribeToMessages(roomId);
+    //_subscribeToMessages(roomId);
   }
 
   /// Firestore에서 실시간 메시지를 구독합니다.
-  void _subscribeToMessages(String roomId) {
-    _messageService.getMessagesStream(roomId).listen((messages) {
-      setState(() {
-        _messages.clear();
-        _messages.addAll(messages);
-      });
-    });
-  }
+  // void _subscribeToMessages(String roomId) {
+  //   _messageService.getMessagesStream(roomId).listen((messages) {
+  //     setState(() {
+  //       _messages.clear();
+  //       _messages.addAll(messages);
+  //     });
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -93,24 +92,34 @@ class _ChatPageState extends State<ChatPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('대화')),
+      appBar: AppBar(
+        title: Text(_otherUserName ?? '상대방 이름 불러오는 중...'),
+        centerTitle: true, // 제목을 중앙에 배치
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child:
+                _otherProfileImage != null
+                    ? CircleAvatar(
+                      radius: 22,
+                      backgroundImage: NetworkImage(_otherProfileImage!),
+                    )
+                    : CircleAvatar(
+                      radius: 22,
+                      backgroundColor: Colors.white60,
+                      child: Icon(Icons.person, size: 22),
+                    ),
+          ),
+        ],
+      ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: UserInfoWidget(
-              chatRoomId: _chatRoomId,
-              myName: _myName,
-              myProfileImage: _myProfileImage,
-              otherUserName: _otherUserName,
-              otherProfileImage: _otherProfileImage,
-            ),
-          ),
+          Expanded(child: ChatOutput()),
           Expanded(
             child: ChatWidget(
-              chatRoomId: _chatRoomId!,
-              messages: _messages,
-              currentUserId: _auth.currentUser!.uid,
+              chatRoomId: _chatRoomId,
+              myUserId: _auth.currentUser?.uid,
+              myName: _myName,
             ),
           ),
         ],
