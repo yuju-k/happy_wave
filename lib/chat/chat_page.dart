@@ -1,9 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_chat_ui/flutter_chat_ui.dart';
-import 'chat_load.dart';
+import 'services/message_service.dart';
+import 'services/user_service.dart';
+import 'widgets/chat_widget.dart';
+import 'widgets/user_info_widget.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -14,11 +15,15 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   String? _chatRoomId;
+  String? _myName;
+  String? _myProfileImage;
   String? _otherUserName;
   String? _otherProfileImage;
   final List<types.Message> _messages = [];
   bool _isLoading = true;
   final _auth = FirebaseAuth.instance;
+  final _userService = UserService();
+  final _messageService = MessageService();
 
   @override
   void initState() {
@@ -31,57 +36,54 @@ class _ChatPageState extends State<ChatPage> {
     final user = _auth.currentUser;
     if (user == null) {
       setState(() => _isLoading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('로그인이 필요합니다.')));
       return;
     }
 
-    final roomId = await fetchChatRoomIdForUser(user.uid);
+    final roomId = await _userService.fetchChatRoomIdForUser(user.uid);
     if (roomId == null) {
       setState(() => _isLoading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('채팅방 정보를 불러오지 못했습니다.')));
       return;
     }
 
-    final otherUserName = await fetchOtherUserName(roomId, user.uid);
-    final otherProfileImage = await fetchOtherUserProfileImage(
+    final myProfile = await _userService.fetchMyProfile(user.uid);
+    final otherUserInfo = await _userService.fetchOtherUserInfo(
       roomId,
       user.uid,
     );
 
+    if (myProfile == null || myProfile['name'] == null) {
+      print('Failed to load my profile: $myProfile');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('내 프로필 정보를 불러오지 못했습니다.')));
+    }
+
     setState(() {
       _chatRoomId = roomId;
-      _otherUserName = otherUserName;
-      _otherProfileImage = otherProfileImage;
+      _myName = myProfile?['name'] ?? '익명 사용자';
+      _myProfileImage = myProfile?['profileImageUrl'];
+      _otherUserName = otherUserInfo?['name'] ?? '알 수 없는 사용자';
+      _otherProfileImage = otherUserInfo?['profileImageUrl'];
       _isLoading = false;
     });
 
-    _listenToMessages(roomId);
+    _subscribeToMessages(roomId);
   }
 
-  /// Firestore에서 실시간 메시지를 수신합니다.
-  void _listenToMessages(String roomId) {
-    FirebaseFirestore.instance
-        .collection('chatrooms')
-        .doc(roomId)
-        .collection('messages')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .listen((snapshot) {
-          final messages =
-              snapshot.docs.map((doc) {
-                final data = doc.data();
-                return types.TextMessage(
-                  id: doc.id,
-                  author: types.User(id: data['authorId'] as String),
-                  createdAt:
-                      (data['createdAt'] as Timestamp).millisecondsSinceEpoch,
-                  text: data['text'] as String,
-                );
-              }).toList();
-
-          setState(() {
-            _messages.clear();
-            _messages.addAll(messages);
-          });
-        });
+  /// Firestore에서 실시간 메시지를 구독합니다.
+  void _subscribeToMessages(String roomId) {
+    _messageService.getMessagesStream(roomId).listen((messages) {
+      setState(() {
+        _messages.clear();
+        _messages.addAll(messages);
+      });
+    });
   }
 
   @override
@@ -92,35 +94,26 @@ class _ChatPageState extends State<ChatPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('대화')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(child: Text('채팅방 ID: $_chatRoomId')),
-            const SizedBox(height: 8),
-            Center(child: Text('상대방: ${_otherUserName ?? '이름을 불러오는 중...'}')),
-            const SizedBox(height: 8),
-            // 프로필 이미지 주소 텍스트로 표시
-            Center(
-              child: Text(
-                '프로필 이미지: ${_otherProfileImage ?? '이미지를 불러오는 중...'}',
-                style: const TextStyle(fontSize: 12),
-              ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: UserInfoWidget(
+              chatRoomId: _chatRoomId,
+              myName: _myName,
+              myProfileImage: _myProfileImage,
+              otherUserName: _otherUserName,
+              otherProfileImage: _otherProfileImage,
             ),
-            Center(
-              child:
-                  _otherProfileImage != null
-                      ? CircleAvatar(
-                        radius: 30,
-                        backgroundImage: NetworkImage(_otherProfileImage!),
-                      )
-                      : const Icon(Icons.person, size: 60),
+          ),
+          Expanded(
+            child: ChatWidget(
+              chatRoomId: _chatRoomId!,
+              messages: _messages,
+              currentUserId: _auth.currentUser!.uid,
             ),
-            const Divider(),
-            // TODO: 채팅 메시지 목록 UI 추가
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
