@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:intl/intl.dart';
 import '../services/message_service.dart';
 
 class ChatOutput extends StatefulWidget {
@@ -90,17 +91,59 @@ class _ChatOutputState extends State<ChatOutput> {
         if (msg is! types.TextMessage) return const SizedBox.shrink();
 
         final isMine = msg.author.id == widget.myUserId;
-        return Align(
-          alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isMine ? Colors.blue[100] : Colors.grey[200],
-              borderRadius: BorderRadius.circular(8),
+
+        final createdTime = DateTime.fromMillisecondsSinceEpoch(msg.createdAt!);
+        final formattedTime = DateFormat('HH:mm').format(createdTime);
+
+        return Column(
+          children: [
+            Align(
+              alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+              child: Container(
+                // 최대사이즈는 화면 너비 50%
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.6,
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color:
+                      isMine
+                          ? Color.fromARGB(255, 212, 250, 253)
+                          : Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        msg.text,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.black,
+                        ),
+                        softWrap: true,
+                      ),
+                    ),
+                    // 시간표시
+                    const SizedBox(width: 8),
+                    Text(
+                      formattedTime,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    // AI 아이콘
+                    // const SizedBox(width: 8),
+                    // const Icon(
+                    //   Icons.auto_fix_high,
+                    //   size: 22,
+                    //   color: Colors.blue,
+                    // ),
+                  ],
+                ),
+              ),
             ),
-            child: Text(msg.text, style: const TextStyle(fontSize: 16)),
-          ),
+          ],
         );
       },
     );

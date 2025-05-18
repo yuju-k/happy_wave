@@ -84,7 +84,7 @@ class _ChatPageState extends State<ChatPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_otherUserName ?? '상대방 이름 불러오는 중...'),
+        title: Text(_otherUserName ?? ''),
         centerTitle: true,
         actions: [
           Padding(
