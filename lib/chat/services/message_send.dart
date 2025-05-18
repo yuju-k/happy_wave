@@ -7,15 +7,13 @@ Future<void> sendMessageToRoom({
   required String authorName,
 }) async {
   final firestore = FirebaseFirestore.instance;
+
   try {
     await firestore.runTransaction((transaction) async {
-      final messageRef =
-          firestore
-              .collection('chatrooms')
-              .doc(roomId)
-              .collection('messages')
-              .doc();
+      final chatRoomRef = firestore.collection('chatrooms').doc(roomId);
+      final messageRef = chatRoomRef.collection('messages').doc();
 
+      // 메시지 데이터
       final message = {
         'text': text,
         'authorId': authorId,
@@ -24,11 +22,14 @@ Future<void> sendMessageToRoom({
         'isRead': false,
       };
 
+      // messages/{messageId}에 추가
       transaction.set(messageRef, message);
-      transaction.update(firestore.collection('chatrooms').doc(roomId), {
+
+      // chatroom 문서가 없다면 생성, 있으면 병합
+      transaction.set(chatRoomRef, {
         'lastMessage': text,
         'lastMessageAt': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
     });
   } catch (e) {
     print('Error sending message to room $roomId: $e');

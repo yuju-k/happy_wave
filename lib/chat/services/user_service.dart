@@ -66,9 +66,9 @@ class UserService {
       }
 
       return {
-        'userId': otherUserUid,
-        'name': data['name'] as String?,
-        'profileImageUrl': data['profileImageUrl'] as String?,
+        'otherUserId': otherUserUid,
+        'otherName': data['name'] as String?,
+        'otherProfileImageUrl': data['profileImageUrl'] as String?,
       };
     } catch (e) {
       print('Error fetching other user info for room $roomId: $e');

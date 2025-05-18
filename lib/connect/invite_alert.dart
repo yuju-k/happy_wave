@@ -26,14 +26,12 @@ class InviteAlertListener {
                   .where((uid) => !_previousInvites.contains(uid))
                   .toList();
 
-          for (final fromUid in newInvites) {
+          for (final fromUid in currentInvites) {
             final email = await InviteService().getEmailByUid(fromUid);
             if (context.mounted) {
               _showInviteDialog(context, fromUid, email);
             }
           }
-
-          _previousInvites = currentInvites;
         });
   }
 

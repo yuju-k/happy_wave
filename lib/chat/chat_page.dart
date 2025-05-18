@@ -56,10 +56,11 @@ class _ChatPageState extends State<ChatPage> {
 
       setState(() {
         _chatRoomId = roomId;
-        _myName = myProfile?['name'] ?? '익명 사용자';
-        _otherUserId = otherUserInfo?['userId'];
-        _otherUserName = otherUserInfo?['name'] ?? '알 수 없는 사용자';
-        _otherProfileImage = otherUserInfo?['profileImageUrl'];
+        _myName = myProfile?['name'];
+        _otherUserId = otherUserInfo?['otherUserId'];
+        _otherUserName = otherUserInfo?['otherName'];
+        _otherProfileImage = otherUserInfo?['otherProfileImageUrl'];
+
         _isLoading = false;
       });
     } catch (e) {
