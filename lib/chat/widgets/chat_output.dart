@@ -34,38 +34,43 @@ class _ChatOutputState extends State<ChatOutput> {
     _subscribeToMessages();
   }
 
-  /// 실시간 메시지 스트림을 구독합니다.
+  /// 실시간 메시지 스트림을 구독하여 새 메시지를 수신합니다.
   void _subscribeToMessages() {
     try {
       _messageService
           .streamNewMessages(widget.chatRoomId)
           .listen(
-            (newMsg) {
+            (newMessage) {
               if (!mounted) return;
 
               setState(() {
-                _messages.add(newMsg);
+                _messages.add(newMessage);
               });
 
+              // 다음 프레임에서 스크롤을 리스트 끝으로 이동
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                _scrollToBottom();
+                _scrollToEnd();
               });
             },
-            onError: (e) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('메시지 스트림 오류: $e')));
+            onError: (error) {
+              if (mounted) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('메시지 스트림 오류: $error')));
+              }
             },
           );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('메시지 구독 초기화 오류: $e')));
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('메시지 구독 초기화 오류: $error')));
+      }
     }
   }
 
-  /// 스크롤을 리스트 하단으로 이동합니다.
-  void _scrollToBottom() {
+  /// 스크롤을 리스트의 끝으로 부드럽게 이동합니다.
+  void _scrollToEnd() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
@@ -87,65 +92,68 @@ class _ChatOutputState extends State<ChatOutput> {
       controller: _scrollController,
       itemCount: _messages.length,
       itemBuilder: (context, index) {
-        final msg = _messages[index];
-        if (msg is! types.TextMessage) return const SizedBox.shrink();
+        final message = _messages[index];
+        if (message is! types.TextMessage) return const SizedBox.shrink();
 
-        final isMine = msg.author.id == widget.myUserId;
-
-        final createdTime = DateTime.fromMillisecondsSinceEpoch(msg.createdAt!);
+        final isMyMessage = message.author.id == widget.myUserId;
+        final createdTime = DateTime.fromMillisecondsSinceEpoch(
+          message.createdAt!,
+        );
         final formattedTime = DateFormat('HH:mm').format(createdTime);
 
-        return Column(
-          children: [
-            Align(
-              alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-              child: Container(
-                // 최대사이즈는 화면 너비 50%
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.6,
-                ),
-                margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color:
-                      isMine
-                          ? Color.fromARGB(255, 212, 250, 253)
-                          : Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        msg.text,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.black,
-                        ),
-                        softWrap: true,
-                      ),
-                    ),
-                    // 시간표시
-                    const SizedBox(width: 8),
-                    Text(
-                      formattedTime,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                    // AI 아이콘
-                    // const SizedBox(width: 8),
-                    // const Icon(
-                    //   Icons.auto_fix_high,
-                    //   size: 22,
-                    //   color: Colors.blue,
-                    // ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        return _buildMessageBubble(
+          context,
+          message: message,
+          isMyMessage: isMyMessage,
+          formattedTime: formattedTime,
         );
       },
+    );
+  }
+
+  /// 메시지 버블 UI를 생성합니다.
+  Widget _buildMessageBubble(
+    BuildContext context, {
+    required types.TextMessage message,
+    required bool isMyMessage,
+    required String formattedTime,
+  }) {
+    return Align(
+      alignment: isMyMessage ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.6,
+        ),
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color:
+              isMyMessage
+                  ? const Color.fromARGB(255, 212, 250, 253)
+                  : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                message.text,
+                style: const TextStyle(fontSize: 16, color: Colors.black),
+                softWrap: true,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              formattedTime,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            // AI 아이콘 필요 시 아래 주석 해제 후 커스터마이징
+            // const SizedBox(width: 8),
+            // const Icon(Icons.auto_fix_high, size: 22, color: Colors.blue),
+          ],
+        ),
+      ),
     );
   }
 }
