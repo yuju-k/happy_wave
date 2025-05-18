@@ -32,7 +32,7 @@ Future<void> sendMessageToRoom({
       }, SetOptions(merge: true));
     });
   } catch (e) {
-    print('Error sending message to room $roomId: $e');
+    //print('Error sending message to room $roomId: $e');
     rethrow;
   }
 }

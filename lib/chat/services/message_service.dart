@@ -30,7 +30,7 @@ class MessageService {
             );
           });
     } catch (e) {
-      print('Error streaming messages for room $roomId: $e');
+      //print('Error streaming messages for room $roomId: $e');
       rethrow;
     }
   }

@@ -4,8 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'invite_firebase.dart';
 
 class InviteAlertListener {
-  static List<String> _previousInvites = [];
-
   static void startListening(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
@@ -21,10 +19,6 @@ class InviteAlertListener {
           final List<String> currentInvites = List<String>.from(
             data['pendingInvites'] ?? [],
           );
-          final List<String> newInvites =
-              currentInvites
-                  .where((uid) => !_previousInvites.contains(uid))
-                  .toList();
 
           for (final fromUid in currentInvites) {
             final email = await InviteService().getEmailByUid(fromUid);
