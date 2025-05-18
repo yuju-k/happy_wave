@@ -1,4 +1,3 @@
-//Firestore를 사용하여 메시지를 보내는 기능을 구현합니다.
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 Future<void> sendMessageToRoom({
@@ -7,26 +6,32 @@ Future<void> sendMessageToRoom({
   required String authorId,
   required String authorName,
 }) async {
-  final message = {
-    'text': text,
-    'authorId': authorId,
-    'authorName': authorName,
-    'createdAt': FieldValue.serverTimestamp(),
-    'isRead': false,
-  };
+  final firestore = FirebaseFirestore.instance;
+  try {
+    await firestore.runTransaction((transaction) async {
+      final messageRef =
+          firestore
+              .collection('chatrooms')
+              .doc(roomId)
+              .collection('messages')
+              .doc();
 
-  final messageRef =
-      FirebaseFirestore.instance
-          .collection('chatrooms')
-          .doc(roomId)
-          .collection('messages')
-          .doc();
+      final message = {
+        'text': text,
+        'authorId': authorId,
+        'authorName': authorName,
+        'createdAt': FieldValue.serverTimestamp(),
+        'isRead': false,
+      };
 
-  await messageRef.set(message);
-
-  // 마지막 메시지 업데이트 (optional)
-  await FirebaseFirestore.instance.collection('chatrooms').doc(roomId).update({
-    'lastMessage': text,
-    'lastMessageAt': FieldValue.serverTimestamp(),
-  });
+      transaction.set(messageRef, message);
+      transaction.update(firestore.collection('chatrooms').doc(roomId), {
+        'lastMessage': text,
+        'lastMessageAt': FieldValue.serverTimestamp(),
+      });
+    });
+  } catch (e) {
+    print('Error sending message to room $roomId: $e');
+    rethrow;
+  }
 }

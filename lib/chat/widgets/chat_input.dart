@@ -1,33 +1,49 @@
 import 'package:flutter/material.dart';
-import '../services/message_send.dart'; // sendMessageToRoom 함수 import
+import '../services/message_send.dart';
 
-class ChatWidget extends StatefulWidget {
-  final String? chatRoomId;
-  final String? myUserId;
-  final String? myName;
+class ChatInput extends StatefulWidget {
+  final String chatRoomId;
+  final String myUserId;
+  final String myName;
 
-  const ChatWidget({super.key, this.chatRoomId, this.myUserId, this.myName});
+  const ChatInput({
+    super.key,
+    required this.chatRoomId,
+    required this.myUserId,
+    required this.myName,
+  });
 
   @override
-  ChatWidgetState createState() => ChatWidgetState();
+  ChatInputState createState() => ChatInputState();
 }
 
-class ChatWidgetState extends State<ChatWidget> {
+class ChatInputState extends State<ChatInput> {
   final TextEditingController _controller = TextEditingController();
 
-  void _handleSend() async {
+  /// 메시지를 전송합니다.
+  Future<void> _handleSend() async {
     final text = _controller.text.trim();
-    if (text.isEmpty || widget.chatRoomId == null || widget.myUserId == null)
-      return;
+    if (text.isEmpty) return;
 
-    await sendMessageToRoom(
-      roomId: widget.chatRoomId!,
-      text: text,
-      authorId: widget.myUserId!,
-      authorName: widget.myName!,
-    );
+    try {
+      await sendMessageToRoom(
+        roomId: widget.chatRoomId,
+        text: text,
+        authorId: widget.myUserId,
+        authorName: widget.myName,
+      );
+      _controller.clear();
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('메시지 전송 중 오류가 발생했습니다: $e')));
+    }
+  }
 
-    _controller.clear(); // 입력창 초기화
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -38,11 +54,13 @@ class ChatWidgetState extends State<ChatWidget> {
         controller: _controller,
         decoration: InputDecoration(
           hintText: '메시지를 입력하세요',
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           suffixIcon: IconButton(
             icon: const Icon(Icons.send),
             onPressed: _handleSend,
           ),
         ),
+        onSubmitted: (_) => _handleSend(),
       ),
     );
   }
