@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_vertexai/firebase_vertexai.dart';
 import '../services/message_send.dart';
+import '../services/message_service.dart';
 
 class ChatInput extends StatefulWidget {
   final String chatRoomId;
@@ -50,32 +51,72 @@ class ChatInputState extends State<ChatInput> {
     }
   }
 
-  /// 입력된 메시지의 감정을 분석합니다 (positive, negative, neutral).
   Future<void> _analyzeSentiment(String message) async {
     try {
       final model = FirebaseVertexAI.instance.generativeModel(
         model: 'gemini-2.0-flash',
       );
 
-      final prompt = [
-        Content.text('이 메시지의 감정을 분석해줘. positive, negative, neutral 중 하나로 출력해.'),
-        Content.text(message),
+      final model2 = FirebaseVertexAI.instance.generativeModel(
+        model: 'gemini-2.0-flash',
+      );
+
+      // ① 최근 메시지 불러오기
+      final pastMessages = await MessageService().getRecentMessages(
+        roomId: widget.chatRoomId,
+      );
+
+      // ② 감정 분석용 히스토리 구성
+      final sentimentHistory = <Content>[
+        Content.text(
+          '다음 대화 맥락을 참고하여 마지막 사용자 메시지의 대화 태도를 분석해주세요. '
+          'Positive, Negative, Neutral 중 하나로만 응답하세요.',
+        ),
       ];
 
-      final response = await model.generateContent(prompt);
-      final sentiment = response.text?.trim() ?? '분석 실패';
+      for (final msg in pastMessages) {
+        sentimentHistory.add(Content('user', [TextPart(msg.text)]));
+      }
 
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('감정 분석 결과: $sentiment')));
+      sentimentHistory.add(Content('user', [TextPart(message)]));
+
+      final chat = model.startChat(history: sentimentHistory);
+
+      // ③ 감정 분석 요청 (빈 메시지 보내지 않음!)
+      final response = await chat.sendMessage(
+        Content.text("Analyze the sentiment"),
+      );
+
+      final sentiment = response.text?.toLowerCase().trim() ?? 'unknown';
+      print('감정 분석 결과: $sentiment');
+
+      // ④ Negative일 경우, 대체 메시지 생성
+      if (sentiment.contains('negative')) {
+        final suggestionHistory = <Content>[
+          Content.text(
+            '다음 대화 맥락을 참고하여 마지막 사용자 메시지를 보다 긍정적이거나 중립적으로 변환해주세요. '
+            '변환된 문장만 출력하세요.',
+          ),
+        ];
+
+        for (final msg in pastMessages) {
+          suggestionHistory.add(Content('user', [TextPart(msg.text)]));
+        }
+
+        suggestionHistory.add(Content('user', [TextPart(message)]));
+
+        final chat2 = model2.startChat(history: suggestionHistory);
+        final suggestionResponse = await chat2.sendMessage(
+          Content.text("Suggest alternative"),
+        );
+
+        final suggestion = suggestionResponse.text?.trim() ?? '(제안 실패)';
+        print('메시지 제안: $suggestion');
+
+        // 원하신다면 여기에 UI로 메시지 제안을 전달하는 로직 삽입 가능
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('감정 분석 중 오류: $e')));
-      }
+      print('감정 분석 중 오류 발생: $e');
     }
   }
 

@@ -34,4 +34,41 @@ class MessageService {
       rethrow;
     }
   }
+
+  // 최근 메시지를 불러옴
+  /// 최근 메시지들을 불러옵니다 (최신순 정렬, 기본 10개).
+  Future<List<types.TextMessage>> getRecentMessages({
+    required String roomId,
+    int limit = 10,
+  }) async {
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('chatrooms')
+              .doc(roomId)
+              .collection('messages')
+              .orderBy('createdAt', descending: true)
+              .limit(limit)
+              .get();
+
+      final messages =
+          snapshot.docs.map((doc) {
+            final data = doc.data();
+            return types.TextMessage(
+              id: doc.id,
+              author: types.User(id: data['authorId'] as String),
+              createdAt:
+                  data['createdAt'] is Timestamp
+                      ? (data['createdAt'] as Timestamp).millisecondsSinceEpoch
+                      : DateTime.now().millisecondsSinceEpoch,
+              text: data['text'] as String,
+            );
+          }).toList();
+
+      return messages.reversed.toList(); // 오래된 순서로 변경 (context 순서 유지)
+    } catch (e) {
+      print('getRecentMessages 오류: $e');
+      rethrow;
+    }
+  }
 }
