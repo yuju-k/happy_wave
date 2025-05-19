@@ -5,6 +5,8 @@ Future<void> sendMessageToRoom({
   required String text,
   required String authorId,
   required String authorName,
+  String? sentimentResult,
+  String? suggestionResult,
 }) async {
   final firestore = FirebaseFirestore.instance;
 
@@ -20,6 +22,8 @@ Future<void> sendMessageToRoom({
         'authorName': authorName,
         'createdAt': FieldValue.serverTimestamp(),
         'isRead': false,
+        'sentimentResult': sentimentResult,
+        'suggestionResult': suggestionResult,
       };
 
       // messages/{messageId}에 추가
