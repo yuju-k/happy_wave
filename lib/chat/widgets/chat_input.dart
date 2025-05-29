@@ -219,17 +219,75 @@ class ChatInputState extends State<ChatInput> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
-      child: TextField(
-        controller: _controller,
-        enabled: !_isLoading, // 로딩 중에는 입력 비활성화
-        decoration: InputDecoration(
-          //hintText: '메시지를 입력하세요',
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          suffixIcon: _buildSendButton(),
+    return Column(
+      children: [
+        _sugestionWidget(),
+        Container(
+          decoration: BoxDecoration(color: Colors.white),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
+            child: TextField(
+              controller: _controller,
+              enabled: !_isLoading, // 로딩 중에는 입력 비활성화
+              decoration: InputDecoration(
+                //hintText: '메시지를 입력하세요',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                suffixIcon: _buildSendButton(),
+              ),
+              onSubmitted: (_) => _handleSend(),
+            ),
+          ),
         ),
-        onSubmitted: (_) => _handleSend(),
+      ],
+    );
+  }
+
+  Widget _sugestionWidget() {
+    return Container(
+      width: double.infinity,
+      height: 60,
+      // 색상 71D9D4 으로 배경 박스
+      decoration: BoxDecoration(color: const Color(0xFF71D9D4)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        child: Row(
+          children: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFEDFFFE),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                minimumSize: Size(0, 0), // 텍스트 길이에 맞게 최소화
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                elevation: 0,
+              ),
+              onPressed: () {},
+              child: const Text('원본', style: TextStyle(color: Colors.black)),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFEDFFFE),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                minimumSize: Size(0, 0), // 텍스트 길이에 맞게 최소화
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                elevation: 0,
+              ),
+              onPressed: () {},
+              child: const Text(
+                '제안 메시지:',
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
