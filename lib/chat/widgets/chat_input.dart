@@ -28,27 +28,26 @@ class ChatInputState extends State<ChatInput> {
   String _sentimentResult = '';
   String _suggestionResult = '';
   late final ChatSession _chat;
-  final List<Content> _history = []; // 대화 기록을 저장할 리스트
+  final List<Content> _history = [];
 
-  bool _isLoading = false; // 로딩 상태 관리
+  bool _isLoading = false; // 메시지 전송 로딩 상태
+  bool _showSuggestions = false; // 제안 메시지 표시 여부
 
   @override
   void initState() {
     super.initState();
-    _initializeChatSession(); //초기 대화 기록 로드
+    _initializeChatSession();
   }
 
   Future<void> _initializeChatSession() async {
     try {
-      // 최근 10개 메시지 가져오기
       final pastMessages = await MessageService().getRecentMessages(
         roomId: widget.chatRoomId,
         limit: 10,
       );
 
-      // 토큰 제한을 고려해 메시지 길이 제한
       var totalLength = 0;
-      const maxLength = 2000; // 예: 2000자로 제한
+      const maxLength = 2000;
 
       for (final msg in pastMessages) {
         if (totalLength + msg.text.length <= maxLength) {
@@ -59,23 +58,22 @@ class ChatInputState extends State<ChatInput> {
         }
       }
 
-      // 초기 대화 세션 시작
       _chat = _model.startChat(history: _history);
       print('대화 세션 초기화 완료: ${_history.length}개의 메시지 로드됨');
     } catch (e) {
       print('대화 세션 초기화 중 오류 발생: $e');
       _showSnackBar('대화 세션 초기화에 실패했습니다.');
-      _chat = _model.startChat(); // 초기화 실패 시 빈 세션 시작
+      _chat = _model.startChat();
     }
   }
 
-  /// 메시지를 전송하고 감정 분석을 수행합니다.
   Future<void> _handleSend() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _isLoading) return;
 
     setState(() {
-      _isLoading = true; // 로딩 시작
+      _isLoading = true;
+      _showSuggestions = false; // 제안 숨기기
     });
 
     try {
@@ -84,10 +82,38 @@ class ChatInputState extends State<ChatInput> {
 
       await _analyzeSentiment(_originalMessage);
 
-      // 메시지 전송
+      // 부정적인 감정이고 제안이 있는 경우 제안 표시
+      if (_sentimentResult == 'negative' && _suggestionResult.isNotEmpty) {
+        setState(() {
+          _showSuggestions = true;
+          _isLoading = false;
+        });
+        print('제안 메시지 표시: $_suggestionResult');
+        return; // 메시지 전송하지 않고 제안만 표시
+      }
+
+      // 긍정적이거나 중립적인 경우 바로 전송
+      await _sendMessage(_originalMessage);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('메시지 전송 중 오류: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _sendMessage(String message) async {
+    try {
       await sendMessageToRoom(
         roomId: widget.chatRoomId,
-        text: _originalMessage,
+        text: message,
         authorId: widget.myUserId,
         authorName: widget.myName,
         sentimentResult: _sentimentResult,
@@ -96,24 +122,22 @@ class ChatInputState extends State<ChatInput> {
 
       if (mounted) {
         _controller.clear();
+        setState(() {
+          _showSuggestions = false;
+          _originalMessage = '';
+          _suggestionResult = '';
+          _sentimentResult = '';
+        });
         print('메시지 전송 완료');
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('메시지 전송 중 오류: $e')));
-      }
-    } finally {
-      setState(() {
-        _isLoading = false; // 로딩 종료
-      });
+      print('메시지 전송 실패: $e');
+      rethrow;
     }
   }
 
   Future<void> _analyzeSentiment(String message) async {
     try {
-      // 새로운 메시지를 history에 추가
       _history.add(Content('user', [TextPart(message)]));
 
       const sentimentPrompt = '''
@@ -133,13 +157,10 @@ class ChatInputState extends State<ChatInput> {
       final rawResponse = sentimentResponse.text?.trim() ?? '';
       print('AI 응답: $rawResponse');
 
-      // 응답에서 감정 키워드 추출
       String extractedSentiment = _extractSentimentFromResponse(rawResponse);
-
       _sentimentResult = extractedSentiment;
       print('감정 분석 결과: $_sentimentResult');
 
-      // 부정적인 경우 제안 메시지 생성
       if (_sentimentResult == 'negative') {
         await _generateSuggestion(message);
       } else {
@@ -167,7 +188,6 @@ class ChatInputState extends State<ChatInput> {
       return 'neutral';
     }
 
-    // 한국어 응답도 처리
     if (lowerResponse.contains('긍정')) {
       return 'positive';
     } else if (lowerResponse.contains('부정')) {
@@ -183,9 +203,9 @@ class ChatInputState extends State<ChatInput> {
   Future<void> _generateSuggestion(String message) async {
     try {
       final suggestionPrompt = '''
-      대화 맥락을 참고하여 마지막 메시지를 긍정적이거나 중립적으로 변환해주세요.
+      마지막 메시지를 긍정적이거나 중립적인 표현으로 바꿔주세요.
       마지막 메시지: "$message"
-      응답 형식: 변환 메시지
+      응답 형식: 변경된 메시지
       ''';
 
       final suggestionResponse = await _chat.sendMessage(
@@ -201,6 +221,51 @@ class ChatInputState extends State<ChatInput> {
       if (mounted) {
         _showSnackBar('제안 생성에 실패했습니다.');
         _suggestionResult = '';
+      }
+    }
+  }
+
+  void _selectOriginalMessage() {
+    setState(() {
+      _controller.text = _originalMessage;
+    });
+  }
+
+  void _selectSuggestion() {
+    setState(() {
+      _controller.text = _suggestionResult;
+    });
+  }
+
+  void _closeSuggestions() {
+    setState(() {
+      _showSuggestions = false;
+      _controller.text = _originalMessage; // 원본 메시지 복원
+    });
+  }
+
+  Future<void> _sendSelectedMessage() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 선택된 메시지를 바로 전송 (감정 분석 재수행 안함)
+      await _sendMessage(text);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('메시지 전송 중 오류: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -221,22 +286,24 @@ class ChatInputState extends State<ChatInput> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _sugestionWidget(),
+        if (_showSuggestions) _suggestionWidget(),
         Container(
-          decoration: BoxDecoration(color: Colors.white),
+          decoration: const BoxDecoration(color: Colors.white),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
             child: TextField(
               controller: _controller,
-              enabled: !_isLoading, // 로딩 중에는 입력 비활성화
+              enabled: !_isLoading,
               decoration: InputDecoration(
-                //hintText: '메시지를 입력하세요',
+                hintText: _showSuggestions ? '원본 또는 제안을 선택하세요' : '메시지를 입력하세요',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 suffixIcon: _buildSendButton(),
               ),
-              onSubmitted: (_) => _handleSend(),
+              onSubmitted:
+                  (_) =>
+                      _showSuggestions ? _sendSelectedMessage() : _handleSend(),
             ),
           ),
         ),
@@ -244,47 +311,112 @@ class ChatInputState extends State<ChatInput> {
     );
   }
 
-  Widget _sugestionWidget() {
+  Widget _suggestionWidget() {
     return Container(
       width: double.infinity,
-      height: 60,
-      // 색상 71D9D4 으로 배경 박스
-      decoration: BoxDecoration(color: const Color(0xFF71D9D4)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15),
-        child: Row(
+      padding: const EdgeInsets.all(15),
+      decoration: const BoxDecoration(color: Color(0xFF71D9D4)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                '💡 더 좋은 표현을 제안드려요!',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Colors.white,
+                ),
+              ),
+              GestureDetector(
+                onTap: _closeSuggestions,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.close, size: 16, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMessageButton(
+                  label: '원본',
+                  message: _originalMessage,
+                  onPressed: _selectOriginalMessage,
+                  isOriginal: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 2,
+                child: _buildMessageButton(
+                  label: '제안',
+                  message: _suggestionResult,
+                  onPressed: _selectSuggestion,
+                  isOriginal: false,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageButton({
+    required String label,
+    required String message,
+    required VoidCallback onPressed,
+    required bool isOriginal,
+  }) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        height: 100,
+        decoration: BoxDecoration(
+          color: const Color(0xFFEDFFFE),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isOriginal ? Colors.orange.shade200 : Colors.green.shade200,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEDFFFE),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+            Row(
+              children: [
+                Icon(
+                  isOriginal ? Icons.edit : Icons.lightbulb,
+                  size: 16,
+                  color: isOriginal ? Colors.orange : Colors.green,
                 ),
-                minimumSize: Size(0, 0), // 텍스트 길이에 맞게 최소화
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                elevation: 0,
-              ),
-              onPressed: () {},
-              child: const Text('원본', style: TextStyle(color: Colors.black)),
+                const SizedBox(width: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isOriginal ? Colors.orange : Colors.green,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEDFFFE),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                minimumSize: Size(0, 0), // 텍스트 길이에 맞게 최소화
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                elevation: 0,
-              ),
-              onPressed: () {},
-              child: const Text(
-                '제안 메시지:',
-                style: TextStyle(color: Colors.black),
-              ),
+            const SizedBox(height: 6),
+            Text(
+              message,
+              style: const TextStyle(color: Colors.black87, fontSize: 13),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -311,7 +443,10 @@ class ChatInputState extends State<ChatInput> {
 
     return IconButton(
       icon: const Icon(Icons.send),
-      onPressed: _isLoading ? null : _handleSend,
+      onPressed:
+          _isLoading
+              ? null
+              : (_showSuggestions ? _sendSelectedMessage : _handleSend),
     );
   }
 }
