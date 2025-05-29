@@ -23,7 +23,7 @@ class ChatInputUI {
   // ===========================================
   Widget _buildInputContainer(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(color: Colors.white),
+      decoration: const BoxDecoration(color: Color(0xFFD8F3F1)),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
         child: TextField(

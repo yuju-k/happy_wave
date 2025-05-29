@@ -5,6 +5,8 @@ Future<void> sendMessageToRoom({
   required String text,
   required String authorId,
   required String authorName,
+  required bool converted,
+  required String originalMessage,
   String? sentimentResult,
   String? suggestionResult,
 }) async {
@@ -21,8 +23,10 @@ Future<void> sendMessageToRoom({
         'authorId': authorId,
         'authorName': authorName,
         'createdAt': FieldValue.serverTimestamp(),
+        'originalMessage': originalMessage,
         'sentimentResult': sentimentResult,
         'suggestionResult': suggestionResult,
+        'converted': converted, // 초기값은 false
       };
 
       // messages/{messageId}에 추가

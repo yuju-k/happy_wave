@@ -21,6 +21,7 @@ class ChatInputController {
   String originalMessage = '';
   String sentimentResult = '';
   String suggestionResult = '';
+  bool convertedResult = false;
   bool isLoading = false;
   bool showSuggestions = false;
 
@@ -89,8 +90,10 @@ class ChatInputController {
         text: message,
         authorId: myUserId,
         authorName: myName,
+        originalMessage: originalMessage,
         sentimentResult: sentimentResult,
         suggestionResult: suggestionResult,
+        converted: convertedResult,
       );
 
       _clearAfterSend();
@@ -164,16 +167,19 @@ class ChatInputController {
   // ===========================================
   void selectOriginalMessage() {
     textController.text = originalMessage;
+    convertedResult = false;
     onStateChanged();
   }
 
   void selectSuggestion() {
     textController.text = suggestionResult;
+    convertedResult = true;
     onStateChanged();
   }
 
   void closeSuggestions() {
     showSuggestions = false;
+    convertedResult = false;
     textController.text = originalMessage;
     onStateChanged();
   }
@@ -204,6 +210,7 @@ class ChatInputController {
     originalMessage = '';
     suggestionResult = '';
     sentimentResult = '';
+    convertedResult = false;
     onStateChanged();
   }
 
