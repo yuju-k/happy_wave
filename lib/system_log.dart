@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 class SystemLogService {
   // Firestore 인스턴스
@@ -13,7 +14,7 @@ class SystemLogService {
       }, SetOptions(merge: true));
     } catch (e) {
       // 에러 로깅 (필요 시 콘솔 또는 다른 로깅 시스템 사용)
-      print('로그인 로그 기록 실패: $e');
+      debugPrint('로그인 로그 기록 실패: $e');
     }
   }
 }

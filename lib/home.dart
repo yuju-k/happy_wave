@@ -79,7 +79,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       _buildHomeTab(),
-      _NullPage(),
+      _nullPage(),
       const SettingsPage(),
     ];
 
@@ -142,7 +142,7 @@ class _HomePageState extends State<HomePage> {
     return const Center(child: Text("공유된 HOME 화면입니다 😊"));
   }
 
-  Widget _NullPage() {
+  Widget _nullPage() {
     return const Center(child: Text("😊"));
   }
 }

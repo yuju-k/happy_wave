@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_vertexai/firebase_vertexai.dart';
 import '../../services/message_send.dart';
-import '../../services/message_service.dart';
 import 'sentiment_analyzer.dart';
 
 class ChatInputController {
@@ -49,9 +47,9 @@ class ChatInputController {
   Future<void> initialize() async {
     try {
       await _sentimentAnalyzer.initialize(chatRoomId);
-      print('ChatInputController 초기화 완료');
+      debugPrint('ChatInputController 초기화 완료');
     } catch (e) {
-      print('ChatInputController 초기화 실패: $e');
+      debugPrint('ChatInputController 초기화 실패: $e');
       onShowSnackBar('대화 세션 초기화에 실패했습니다.');
     }
   }
@@ -73,7 +71,7 @@ class ChatInputController {
 
     try {
       originalMessage = text;
-      print('전송할 메시지: $originalMessage');
+      debugPrint('전송할 메시지: $originalMessage');
 
       await _sentimentAnalyzer.analyzeSentiment(originalMessage);
 
@@ -96,9 +94,9 @@ class ChatInputController {
       );
 
       _clearAfterSend();
-      print('메시지 전송 완료');
+      debugPrint('메시지 전송 완료');
     } catch (e) {
-      print('메시지 전송 실패: $e');
+      debugPrint('메시지 전송 실패: $e');
       rethrow;
     }
   }
@@ -145,7 +143,7 @@ class ChatInputController {
   }
 
   void _handleAnalysisError(String error) {
-    print('감정 분석 오류: $error');
+    debugPrint('감정 분석 오류: $error');
     onShowSnackBar('감정 분석에 실패했습니다. 메시지를 전송합니다.');
     sentimentResult = 'neutral';
     suggestionResult = '';
@@ -197,7 +195,7 @@ class ChatInputController {
     showSuggestions = true;
     isLoading = false;
     onStateChanged();
-    print('제안 메시지 표시: $suggestionResult');
+    debugPrint('제안 메시지 표시: $suggestionResult');
   }
 
   void _clearAfterSend() {

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:firebase_vertexai/firebase_vertexai.dart';
 import '../../services/message_service.dart';
 
@@ -50,7 +51,7 @@ class SentimentAnalyzer {
       }
 
       _chat = _model.startChat(history: _history);
-      print('감정 분석기 초기화 완료: ${_history.length}개의 메시지 로드됨');
+      debugPrint('감정 분석기 초기화 완료: ${_history.length}개의 메시지 로드됨');
     } catch (e) {
       throw Exception('감정 분석기 초기화 실패: $e');
     }
@@ -68,12 +69,12 @@ class SentimentAnalyzer {
       _history.add(Content('user', [TextPart(message)]));
 
       final sentiment = await _performSentimentAnalysis();
-      print('감정 분석 결과: $sentiment');
+      debugPrint('감정 분석 결과: $sentiment');
 
       String suggestion = '';
       if (sentiment == 'negative') {
         suggestion = await _generateSuggestion(message);
-        print('제안 메시지: $suggestion');
+        debugPrint('제안 메시지: $suggestion');
       }
 
       onSentimentAnalyzed(sentiment, suggestion);
@@ -101,7 +102,7 @@ class SentimentAnalyzer {
     );
 
     final rawResponse = sentimentResponse.text?.trim() ?? '';
-    print('AI 감정 분석 응답: $rawResponse');
+    debugPrint('AI 감정 분석 응답: $rawResponse');
 
     return _extractSentimentFromResponse(rawResponse);
   }
@@ -116,7 +117,7 @@ class SentimentAnalyzer {
     if (lowerResponse.contains('부정')) return 'negative';
     if (lowerResponse.contains('중립')) return 'neutral';
 
-    print('⚠️ 알 수 없는 감정 응답, 기본값 사용: $response');
+    debugPrint('⚠️ 알 수 없는 감정 응답, 기본값 사용: $response');
     return 'neutral';
   }
 
@@ -136,11 +137,11 @@ class SentimentAnalyzer {
       );
 
       final rawSuggestion = suggestionResponse.text?.trim() ?? '';
-      print('AI 제안 생성 응답: $rawSuggestion');
+      debugPrint('AI 제안 생성 응답: $rawSuggestion');
 
       return rawSuggestion.isEmpty ? '제안 생성에 실패했습니다.' : rawSuggestion;
     } catch (e) {
-      print('제안 생성 중 오류 발생: $e');
+      debugPrint('제안 생성 중 오류 발생: $e');
       return '제안 생성 중 오류가 발생했습니다.';
     }
   }

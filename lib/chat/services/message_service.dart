@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
@@ -67,7 +68,7 @@ class MessageService {
 
       return messages.reversed.toList(); // 오래된 순서로 변경 (context 순서 유지)
     } catch (e) {
-      print('getRecentMessages 오류: $e');
+      debugPrint('getRecentMessages 오류: $e');
       rethrow;
     }
   }

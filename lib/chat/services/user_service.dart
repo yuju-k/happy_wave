@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserService {
@@ -9,7 +10,7 @@ class UserService {
       final userDoc = await _firestore.collection('users').doc(uid).get();
       return userDoc.data()?['chatroomId'] as String?;
     } catch (e) {
-      print('Error fetching chat room ID for UID $uid: $e');
+      debugPrint('Error fetching chat room ID for UID $uid: $e');
       return null;
     }
   }
@@ -19,7 +20,7 @@ class UserService {
     try {
       final userDoc = await _firestore.collection('users').doc(uid).get();
       if (!userDoc.exists || userDoc.data() == null) {
-        print('User document does not exist or is empty for UID: $uid');
+        debugPrint('User document does not exist or is empty for UID: $uid');
         return null;
       }
 
@@ -29,7 +30,7 @@ class UserService {
         'profileImageUrl': data['profileImageUrl'] as String?,
       };
     } catch (e) {
-      print('Error fetching profile for UID $uid: $e');
+      debugPrint('Error fetching profile for UID $uid: $e');
       return null;
     }
   }
@@ -44,7 +45,7 @@ class UserService {
           await _firestore.collection('chatrooms').doc(roomId).get();
       final users = chatRoomDoc.data()?['users'] as List<dynamic>?;
       if (users == null || users.isEmpty) {
-        print('No users found in chatroom $roomId');
+        debugPrint('No users found in chatroom $roomId');
         return null;
       }
 
@@ -53,7 +54,7 @@ class UserService {
         orElse: () => null,
       );
       if (otherUserUid == null) {
-        print('No other user found in chatroom $roomId');
+        debugPrint('No other user found in chatroom $roomId');
         return null;
       }
 
@@ -61,7 +62,7 @@ class UserService {
           await _firestore.collection('users').doc(otherUserUid).get();
       final data = otherUserDoc.data();
       if (data == null) {
-        print('No data found for other user $otherUserUid');
+        debugPrint('No data found for other user $otherUserUid');
         return null;
       }
 
@@ -71,7 +72,7 @@ class UserService {
         'otherProfileImageUrl': data['profileImageUrl'] as String?,
       };
     } catch (e) {
-      print('Error fetching other user info for room $roomId: $e');
+      debugPrint('Error fetching other user info for room $roomId: $e');
       return null;
     }
   }
