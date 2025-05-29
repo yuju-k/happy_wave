@@ -21,7 +21,6 @@ Future<void> sendMessageToRoom({
         'authorId': authorId,
         'authorName': authorName,
         'createdAt': FieldValue.serverTimestamp(),
-        'isRead': false,
         'sentimentResult': sentimentResult,
         'suggestionResult': suggestionResult,
       };

@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'services/user_service.dart';
-import 'widgets/chat_input.dart';
+import 'widgets/chat_input/chat_input.dart';
 import 'widgets/chat_output.dart';
 
 class ChatPage extends StatefulWidget {
