@@ -133,24 +133,63 @@ class _ChatOutputState extends State<ChatOutput> {
                   : Colors.white,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+        child: Column(
           children: [
-            Flexible(
-              child: Text(
-                message.text,
-                style: const TextStyle(fontSize: 16, color: Colors.black),
-                softWrap: true,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    message.text + '테스트길이길이길이길이테스트테스트',
+                    style: const TextStyle(fontSize: 16, color: Colors.black),
+                    softWrap: true,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  formattedTime,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                // AI 아이콘 필요 시 아래 주석 해제 후 커스터마이징
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.auto_fix_high,
+                  size: 22,
+                  color: Color(0xFF389EA9),
+                ),
+              ],
+            ),
+            const SizedBox(height: 5),
+            Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(
+                    color: Color(0xFF389EA9), // 테두리 색상
+                    width: 2.0, // 테두리 두께
+                  ),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '원본',
+                    textAlign: TextAlign.left,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF389EA9),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '오른쪽 테두리만 있는 컨테이너 오른쪽 테두리만 있는 컨테이너 오른쪽 테두리만 있는 컨테이너',
+                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    softWrap: true,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 8),
-            Text(
-              formattedTime,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            // AI 아이콘 필요 시 아래 주석 해제 후 커스터마이징
-            // const SizedBox(width: 8),
-            // const Icon(Icons.auto_fix_high, size: 22, color: Colors.blue),
           ],
         ),
       ),
