@@ -28,6 +28,10 @@ class MessageService {
                       ? (data['createdAt'] as Timestamp).millisecondsSinceEpoch
                       : DateTime.now().millisecondsSinceEpoch,
               text: data['text'] as String,
+              metadata: {
+                'converted': data['converted'] as bool? ?? false,
+                'originalMessage': data['originalMessage'] as String? ?? '',
+              }
             );
           });
     } catch (e) {

@@ -28,6 +28,9 @@ class _ChatOutputState extends State<ChatOutput> {
   final ScrollController _scrollController = ScrollController();
   final List<types.Message> _messages = [];
 
+  // 각 메시지별로 원본 컨테이너 표시 상태를 관리하는 맵
+  final Map<String, bool> _showOriginalMap = {};
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +48,8 @@ class _ChatOutputState extends State<ChatOutput> {
 
               setState(() {
                 _messages.add(newMessage);
+                // 새 메시지의 원본 컨테이너는 기본적으로 숨김
+                _showOriginalMap[newMessage.id] = false;
               });
 
               // 다음 프레임에서 스크롤을 리스트 끝으로 이동
@@ -78,6 +83,13 @@ class _ChatOutputState extends State<ChatOutput> {
         curve: Curves.easeOut,
       );
     }
+  }
+
+  /// 원본 컨테이너 표시 상태를 토글합니다.
+  void _toggleOriginalContainer(String messageId) {
+    setState(() {
+      _showOriginalMap[messageId] = !(_showOriginalMap[messageId] ?? false);
+    });
   }
 
   @override
@@ -118,6 +130,10 @@ class _ChatOutputState extends State<ChatOutput> {
     required bool isMyMessage,
     required String formattedTime,
   }) {
+    final showOriginal = _showOriginalMap[message.id] ?? false;
+    final isConverted = message.metadata?['converted'] as bool? ?? false;
+    final textOriginalMessage = message.metadata?['originalMessage'] as String? ?? '';
+
     return Align(
       alignment: isMyMessage ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -140,7 +156,7 @@ class _ChatOutputState extends State<ChatOutput> {
               children: [
                 Flexible(
                   child: Text(
-                    message.text + '테스트길이길이길이길이테스트테스트',
+                    message.text,
                     style: const TextStyle(fontSize: 16, color: Colors.black),
                     softWrap: true,
                   ),
@@ -150,46 +166,50 @@ class _ChatOutputState extends State<ChatOutput> {
                   formattedTime,
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
-                // AI 아이콘 필요 시 아래 주석 해제 후 커스터마이징
+                if (isConverted) ...[
                 const SizedBox(width: 8),
-                const Icon(
-                  Icons.auto_fix_high,
-                  size: 22,
-                  color: Color(0xFF389EA9),
+                GestureDetector(
+                  onTap: () => _toggleOriginalContainer(message.id),
+                  child: Icon(
+                    Icons.auto_fix_high,
+                    size: 22,
+                    color: showOriginal ? Colors.grey : const Color(0xFF389EA9),
+                  ),
                 ),
               ],
+              ],
             ),
-            const SizedBox(height: 5),
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                border: Border(
-                  left: BorderSide(
-                    color: Color(0xFF389EA9), // 테두리 색상
-                    width: 2.0, // 테두리 두께
+            // 원본 컨테이너를 조건부로 표시
+            if (showOriginal) ...[
+              const SizedBox(height: 5),
+              Container(
+                padding: const EdgeInsets.all(5),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    left: BorderSide(color: Color(0xFF389EA9), width: 2.0),
                   ),
                 ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '원본',
-                    textAlign: TextAlign.left,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF389EA9),
-                      fontWeight: FontWeight.bold,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '원본',
+                      textAlign: TextAlign.left,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF389EA9),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  Text(
-                    '오른쪽 테두리만 있는 컨테이너 오른쪽 테두리만 있는 컨테이너 오른쪽 테두리만 있는 컨테이너',
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
-                    softWrap: true,
-                  ),
-                ],
+                    Text(
+                      textOriginalMessage,
+                      style: TextStyle(fontSize: 14, color: Colors.black),
+                      softWrap: true,
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),
