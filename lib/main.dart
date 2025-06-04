@@ -112,6 +112,41 @@ class MainPage extends StatelessWidget {
   }
 
   Future<User?> _checkUserLoginStatus() async {
-    return FirebaseAuth.instance.currentUser;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      // 사용자가 없으면 바로 null 반환
+      if (user == null) {
+        return null;
+      }
+
+      // 사용자가 있으면 토큰 유효성 검증
+      await user.reload(); // 서버에서 최신 사용자 정보 가져오기
+
+      // reload 후 다시 currentUser 확인 (서버에서 삭제된 경우 null이 됨)
+      final refreshedUser = FirebaseAuth.instance.currentUser;
+
+      if (refreshedUser != null && refreshedUser.uid.isNotEmpty) {
+        // 추가 검증: 토큰이 유효한지 확인
+        try {
+          await refreshedUser.getIdToken(true); // 강제로 새 토큰 발급
+          return refreshedUser;
+        } catch (tokenError) {
+          // 토큰 발급 실패 시 로그아웃
+          debugPrint('토큰 발급 실패: $tokenError');
+          await FirebaseAuth.instance.signOut();
+          return null;
+        }
+      } else {
+        // reload 후 사용자가 null이면 로그아웃
+        await FirebaseAuth.instance.signOut();
+        return null;
+      }
+    } catch (e) {
+      // reload 실패 시 (사용자가 서버에서 삭제된 경우)
+      debugPrint('사용자 정보 갱신 실패: $e');
+      await FirebaseAuth.instance.signOut();
+      return null;
+    }
   }
 }
