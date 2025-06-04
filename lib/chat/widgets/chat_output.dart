@@ -150,77 +150,98 @@ class _ChatOutputState extends State<ChatOutput> {
                   : Colors.white,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 메시지 텍스트
-            Text(
-              message.text,
-              style: const TextStyle(fontSize: 16, color: Colors.black),
-              softWrap: true,
-            ),
-            const SizedBox(height: 4),
-
-            // 시간과 아이콘을 오른쪽 아래에 배치
-            Align(
-              alignment: Alignment.centerRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+        child: IntrinsicWidth(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 메시지 텍스트와 시간/아이콘을 함께 배치
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    formattedTime,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                  if (isConverted) ...[
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () => _toggleOriginalContainer(message.id),
-                      child: Icon(
-                        Icons.auto_fix_high,
-                        size: 22,
-                        color:
-                            showOriginal
-                                ? Colors.grey
-                                : const Color(0xFF389EA9),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-
-            // 원본 컨테이너를 조건부로 표시
-            if (showOriginal) ...[
-              const SizedBox(height: 5),
-              Container(
-                padding: const EdgeInsets.all(5),
-                decoration: const BoxDecoration(
-                  border: Border(
-                    left: BorderSide(color: Color(0xFF389EA9), width: 2.0),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '원본',
-                      textAlign: TextAlign.left,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF389EA9),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      textOriginalMessage,
-                      style: const TextStyle(fontSize: 14, color: Colors.black),
+                  // 메시지 텍스트
+                  Expanded(
+                    child: Text(
+                      message.text,
+                      style: const TextStyle(fontSize: 16, color: Colors.black),
                       softWrap: true,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // 시간과 아이콘
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            formattedTime,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          if (isConverted) ...[
+                            const SizedBox(width: 4),
+                            GestureDetector(
+                              onTap: () => _toggleOriginalContainer(message.id),
+                              child: Icon(
+                                Icons.auto_fix_high,
+                                size: 18,
+                                color:
+                                    showOriginal
+                                        ? Colors.grey
+                                        : const Color(0xFF389EA9),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
               ),
+
+              // 원본 컨테이너를 조건부로 표시
+              if (showOriginal) ...[
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      left: BorderSide(color: Color(0xFF389EA9), width: 3.0),
+                    ),
+                    color: Color(0xFFF5F5F5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '원본 메시지',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF389EA9),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        textOriginalMessage,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
+                        softWrap: true,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
