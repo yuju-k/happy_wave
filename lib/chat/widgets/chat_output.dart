@@ -132,7 +132,8 @@ class _ChatOutputState extends State<ChatOutput> {
   }) {
     final showOriginal = _showOriginalMap[message.id] ?? false;
     final isConverted = message.metadata?['converted'] as bool? ?? false;
-    final textOriginalMessage = message.metadata?['originalMessage'] as String? ?? '';
+    final textOriginalMessage =
+        message.metadata?['originalMessage'] as String? ?? '';
 
     return Align(
       alignment: isMyMessage ? Alignment.centerRight : Alignment.centerLeft,
@@ -150,35 +151,44 @@ class _ChatOutputState extends State<ChatOutput> {
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: Text(
-                    message.text,
-                    style: const TextStyle(fontSize: 16, color: Colors.black),
-                    softWrap: true,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  formattedTime,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-                if (isConverted) ...[
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => _toggleOriginalContainer(message.id),
-                  child: Icon(
-                    Icons.auto_fix_high,
-                    size: 22,
-                    color: showOriginal ? Colors.grey : const Color(0xFF389EA9),
-                  ),
-                ),
-              ],
-              ],
+            // 메시지 텍스트
+            Text(
+              message.text,
+              style: const TextStyle(fontSize: 16, color: Colors.black),
+              softWrap: true,
             ),
+            const SizedBox(height: 4),
+
+            // 시간과 아이콘을 오른쪽 아래에 배치
+            Align(
+              alignment: Alignment.centerRight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    formattedTime,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  if (isConverted) ...[
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => _toggleOriginalContainer(message.id),
+                      child: Icon(
+                        Icons.auto_fix_high,
+                        size: 22,
+                        color:
+                            showOriginal
+                                ? Colors.grey
+                                : const Color(0xFF389EA9),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
             // 원본 컨테이너를 조건부로 표시
             if (showOriginal) ...[
               const SizedBox(height: 5),
@@ -203,7 +213,7 @@ class _ChatOutputState extends State<ChatOutput> {
                     ),
                     Text(
                       textOriginalMessage,
-                      style: TextStyle(fontSize: 14, color: Colors.black),
+                      style: const TextStyle(fontSize: 14, color: Colors.black),
                       softWrap: true,
                     ),
                   ],
