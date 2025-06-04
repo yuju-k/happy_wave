@@ -139,7 +139,26 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildConnectedHome() {
-    return const Center(child: Text("공유된 HOME 화면입니다 😊"));
+    return Scaffold(
+      appBar: AppBar(title: const Text("상대방 이름")),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // 상대방 프로필 사진
+            const CircleAvatar(
+              radius: 80,
+              backgroundImage: AssetImage('assets/images/default_profile.png'),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "상대방 상태 메시지",
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _nullPage() {

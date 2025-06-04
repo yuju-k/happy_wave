@@ -70,6 +70,7 @@ class UserService {
         'otherUserId': otherUserUid,
         'otherName': data['name'] as String?,
         'otherProfileImageUrl': data['profileImageUrl'] as String?,
+        'otherStatusMessage': data['statusMessage'] as String?,
       };
     } catch (e) {
       debugPrint('Error fetching other user info for room $roomId: $e');
