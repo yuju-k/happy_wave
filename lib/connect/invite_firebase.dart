@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/widgets.dart';
 
 class InviteService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -52,7 +53,7 @@ class InviteService {
       }
       return null;
     } catch (e) {
-      print('Error getting pending invite: $e');
+      debugPrint('Error getting pending invite: $e');
       return null;
     }
   }
@@ -80,7 +81,7 @@ class InviteService {
 
       return null;
     } catch (e) {
-      print('Error checking existing home: $e');
+      debugPrint('Error checking existing home: $e');
       return null;
     }
   }
