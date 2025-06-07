@@ -11,6 +11,13 @@ class SettingsPage extends StatelessWidget {
     ).showSnackBar(const SnackBar(content: Text('프로필 설정 클릭됨')));
   }
 
+  void _inviteUser(BuildContext context) {
+    // TODO: 초대 기능 옮기기
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('사용자 초대')));
+  }
+
   void _onLogout(BuildContext context) {
     // Firebase Auth 로그아웃
     FirebaseAuth.instance
@@ -40,6 +47,12 @@ class SettingsPage extends StatelessWidget {
               icon: const Icon(Icons.person),
               label: const Text('프로필 설정'),
               onPressed: () => _onProfileSettings(context),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.person),
+              label: const Text('초대하기'),
+              onPressed: () => _inviteUser(context),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
