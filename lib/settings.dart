@@ -41,7 +41,12 @@ class SettingsPage extends StatelessWidget {
   Future<void> _performDisconnection(BuildContext context) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+      debugPrint('🔍 현재 사용자: ${user?.uid}');
+
+      if (user == null) {
+        debugPrint('❌ 사용자가 로그인되어 있지 않음');
+        return;
+      }
 
       // 로딩 표시
       showDialog(
@@ -50,6 +55,7 @@ class SettingsPage extends StatelessWidget {
         builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
+      debugPrint('🔍 사용자 문서 조회 시작...');
       final userDocRef = FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid);
@@ -57,25 +63,34 @@ class SettingsPage extends StatelessWidget {
       final userDoc = await userDocRef.get();
       final userData = userDoc.data();
 
+      debugPrint('🔍 사용자 데이터: $userData');
+
       if (userData == null) {
+        debugPrint('❌ 사용자 데이터가 없음');
         Navigator.of(context).pop(); // 로딩 닫기
         return;
       }
 
-      final homeId = userData['homeId'] as String?;
       final chatroomId = userData['chatroomId'] as String?;
 
-      if (homeId != null) {
-        // shared_home에서 상대방 UID 찾기
-        final sharedHomeDoc =
+      debugPrint('🔍 chatroomId: $chatroomId');
+
+      if (chatroomId != null) {
+        debugPrint('🔍 채팅방 문서에서 상대방 UID 찾기...');
+        final chatroomDoc =
             await FirebaseFirestore.instance
-                .collection('shared_homes')
-                .doc(homeId)
+                .collection('chatrooms')
+                .doc(chatroomId)
                 .get();
 
+        debugPrint('🔍 chatroom 문서 존재: ${chatroomDoc.exists}');
+        debugPrint('🔍 chatroom 데이터: ${chatroomDoc.data()}');
+
         String? otherUserUid;
-        if (sharedHomeDoc.exists) {
-          final users = sharedHomeDoc.data()?['users'] as List<dynamic>?;
+        if (chatroomDoc.exists) {
+          final users = chatroomDoc.data()?['users'] as List<dynamic>?;
+          debugPrint('🔍 채팅방 사용자 목록: $users');
+
           if (users != null) {
             otherUserUid = users.firstWhere(
               (uid) => uid != user.uid,
@@ -84,42 +99,57 @@ class SettingsPage extends StatelessWidget {
           }
         }
 
+        debugPrint('🔍 상대방 UID: $otherUserUid');
+
+        // 트랜잭션 시작 전 로그
+        debugPrint('🚀 Firebase 트랜잭션 시작...');
+
         // Firestore 트랜잭션으로 연결 상태만 변경 (데이터는 보존)
         await FirebaseFirestore.instance.runTransaction((transaction) async {
-          // 내 문서에서 연결 상태만 false로 변경 (homeId, chatroomId는 보존)
+          debugPrint('📝 내 문서 업데이트 중...');
+          // 내 문서에서 연결 상태만 false로 변경
           transaction.update(userDocRef, {'connect_status': false});
 
           // 상대방 문서에서도 연결 상태만 false로 변경
           if (otherUserUid != null) {
+            debugPrint('📝 상대방 문서 업데이트 중...');
             final otherUserRef = FirebaseFirestore.instance
                 .collection('users')
                 .doc(otherUserUid);
             transaction.update(otherUserRef, {'connect_status': false});
           }
 
-          // shared_home 문서의 상태를 'disconnected'로 변경 (삭제하지 않음)
-          final sharedHomeRef = FirebaseFirestore.instance
-              .collection('shared_homes')
-              .doc(homeId);
-          transaction.update(sharedHomeRef, {
+          // 채팅방 문서 상태 업데이트
+          debugPrint('📝 채팅방 문서 업데이트 중...');
+          final chatroomRef = FirebaseFirestore.instance
+              .collection('chatrooms')
+              .doc(chatroomId);
+          transaction.update(chatroomRef, {
             'status': 'disconnected',
             'disconnectedAt': FieldValue.serverTimestamp(),
           });
 
-          // 채팅방 문서도 보존하되 상태만 변경
-          if (chatroomId != null) {
-            final chatroomRef = FirebaseFirestore.instance
-                .collection('chatrooms')
-                .doc(chatroomId);
-            transaction.update(chatroomRef, {
-              'status': 'disconnected',
-              'disconnectedAt': FieldValue.serverTimestamp(),
-            });
-          }
+          // shared_home이 존재한다면 상태 업데이트 (homeId와 chatroomId가 같다고 가정)
+          debugPrint('📝 shared_home 문서 확인 및 업데이트...');
+          final sharedHomeRef = FirebaseFirestore.instance
+              .collection('shared_homes')
+              .doc(chatroomId);
+
+          // shared_home 문서가 존재하는지 확인하고 업데이트
+          // 트랜잭션 내에서는 get()을 사용할 수 없으므로, 업데이트만 시도
+          transaction.update(sharedHomeRef, {
+            'status': 'disconnected',
+            'disconnectedAt': FieldValue.serverTimestamp(),
+          });
         });
 
+        debugPrint('✅ 트랜잭션 완료');
+
         // invites 문서는 정리 (재연결을 위해 새로운 초대 필요)
+        debugPrint('🗑️ invites 문서 정리 중...');
         await _cleanupInvites(user.uid, otherUserUid);
+      } else {
+        debugPrint('❌ chatroomId가 없음 - 연결된 상태가 아님');
       }
 
       Navigator.of(context).pop(); // 로딩 닫기
@@ -129,7 +159,12 @@ class SettingsPage extends StatelessWidget {
           const SnackBar(content: Text('연결이 해제되었습니다. 대화 기록은 보존됩니다.')),
         );
       }
-    } catch (e) {
+
+      debugPrint('🎉 연결 해제 완료');
+    } catch (e, stackTrace) {
+      debugPrint('❌ 연결 해제 중 오류: $e');
+      debugPrint('📋 스택트레이스: $stackTrace');
+
       Navigator.of(context).pop(); // 로딩 닫기
       if (context.mounted) {
         ScaffoldMessenger.of(
@@ -142,8 +177,12 @@ class SettingsPage extends StatelessWidget {
   // invites 문서 정리
   Future<void> _cleanupInvites(String myUid, String? otherUserUid) async {
     try {
-      if (otherUserUid == null) return;
+      if (otherUserUid == null) {
+        debugPrint('⚠️ otherUserUid가 null - invites 정리 건너뜀');
+        return;
+      }
 
+      debugPrint('🗑️ invites 문서 정리 시작...');
       final batch = FirebaseFirestore.instance.batch();
 
       // 내가 보낸 초대
@@ -156,12 +195,17 @@ class SettingsPage extends StatelessWidget {
           .collection('invites')
           .doc('${otherUserUid}_$myUid');
 
+      debugPrint(
+        '🗑️ 삭제할 invites: ${myUid}_$otherUserUid, ${otherUserUid}_$myUid',
+      );
+
       batch.delete(myInviteRef);
       batch.delete(otherInviteRef);
 
       await batch.commit();
+      debugPrint('✅ invites 문서 정리 완료');
     } catch (e) {
-      debugPrint('초대 문서 정리 중 오류: $e');
+      debugPrint('❌ 초대 문서 정리 중 오류: $e');
     }
   }
 
@@ -208,6 +252,11 @@ class SettingsPage extends StatelessWidget {
           final hasPendingInvites =
               userData?['pendingInvites'] != null &&
               (userData!['pendingInvites'] as List).isNotEmpty;
+
+          // 디버깅을 위한 로그
+          debugPrint('🔍 현재 연결 상태: $isConnected');
+          debugPrint('🔍 대기 중인 초대: $hasPendingInvites');
+          debugPrint('🔍 사용자 데이터: $userData');
 
           return Padding(
             padding: const EdgeInsets.all(24.0),
