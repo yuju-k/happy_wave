@@ -63,11 +63,6 @@ class _HomePageState extends State<HomePage> {
         ).showSnackBar(const SnackBar(content: Text("상대방과 연결되어야 채팅이 가능합니다.")));
         return;
       }
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const ChatPage()),
-      );
-      return;
     }
 
     setState(() {
@@ -77,11 +72,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> pages = [
-      _buildHomeTab(),
-      _nullPage(),
-      const SettingsPage(),
-    ];
+    final List<Widget> pages = [const ChatPage(), const SettingsPage()];
 
     return Scaffold(
       body: pages[_selectedIndex],
@@ -89,7 +80,6 @@ class _HomePageState extends State<HomePage> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_rounded),
             label: '대화',
@@ -159,9 +149,5 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
-  }
-
-  Widget _nullPage() {
-    return const Center(child: Text("😊"));
   }
 }

@@ -86,22 +86,20 @@ class _ChatPageState extends State<ChatPage> {
       appBar: AppBar(
         title: Text(_otherUserName ?? ''),
         centerTitle: true,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child:
-                _otherProfileImage != null
-                    ? CircleAvatar(
-                      radius: 22,
-                      backgroundImage: NetworkImage(_otherProfileImage!),
-                    )
-                    : const CircleAvatar(
-                      radius: 22,
-                      backgroundColor: Colors.white60,
-                      child: Icon(Icons.person, size: 22),
-                    ),
-          ),
-        ],
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child:
+              _otherProfileImage != null
+                  ? CircleAvatar(
+                    radius: 22,
+                    backgroundImage: NetworkImage(_otherProfileImage!),
+                  )
+                  : const CircleAvatar(
+                    radius: 22,
+                    backgroundColor: Colors.white60,
+                    child: Icon(Icons.person, size: 22),
+                  ),
+        ),
       ),
       body: Column(
         children: [
