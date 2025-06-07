@@ -15,7 +15,7 @@ class SettingsPage extends StatelessWidget {
     // TODO: 초대 기능 옮기기
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('사용자 초대')));
+    ).showSnackBar(const SnackBar(content: Text('초대 관리')));
   }
 
   void _onLogout(BuildContext context) {
@@ -51,7 +51,7 @@ class SettingsPage extends StatelessWidget {
             const SizedBox(height: 16),
             ElevatedButton.icon(
               icon: const Icon(Icons.person),
-              label: const Text('초대하기'),
+              label: const Text('상대방과 연결 해제'),
               onPressed: () => _inviteUser(context),
             ),
             const SizedBox(height: 16),
