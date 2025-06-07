@@ -76,6 +76,11 @@ class _ChatPageState extends State<ChatPage> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  /// 설정 페이지로 이동합니다.
+  void _navigateToSettings() {
+    Navigator.pushNamed(context, '/settings');
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading || _chatRoomId == null) {
@@ -100,6 +105,13 @@ class _ChatPageState extends State<ChatPage> {
                     child: Icon(Icons.person, size: 22),
                   ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: _navigateToSettings,
+            tooltip: '설정',
+          ),
+        ],
       ),
       body: Column(
         children: [
