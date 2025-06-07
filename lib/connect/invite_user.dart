@@ -131,7 +131,17 @@ class _InviteUserPageState extends State<InviteUserPage> {
     return Stack(
       children: [
         Scaffold(
-          appBar: AppBar(),
+          appBar: AppBar(
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.settings),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/settings');
+                },
+                tooltip: '설정',
+              ),
+            ],
+          ),
           body: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
