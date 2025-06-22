@@ -16,6 +16,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        // Core library desugaring 활성화
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -31,6 +33,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // 멀티덱스 지원 추가
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -47,6 +52,9 @@ flutter {
 }
 
 dependencies {
-    implementation(platform("com.google.firebase:firebase-bom:33.0.0")) // 최신 BOM 버전 확인 후 입력
-    implementation("com.google.firebase:firebase-messaging-ktx")
+    // Core library desugaring (버전 업데이트)
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    
+    // 멀티덱스 지원
+    implementation("androidx.multidex:multidex:2.0.1")
 }

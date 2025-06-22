@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'services/app_state_service.dart';
+import 'services/notification_service.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -211,18 +213,55 @@ class SettingsPage extends StatelessWidget {
     }
   }
 
-  // Handle logout
-  void _handleLogout(BuildContext context) {
-    FirebaseAuth.instance
-        .signOut()
-        .then((_) {
-          Navigator.pushReplacementNamed(context, '/');
-        })
-        .catchError((error) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('로그아웃 실패')));
-        });
+  // Handle logout with app state and notification cleanup
+  void _handleLogout(BuildContext context) async {
+    try {
+      // 로딩 다이얼로그 표시
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (context) => const AlertDialog(
+              content: Row(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(width: 16),
+                  Text('로그아웃 중...'),
+                ],
+              ),
+            ),
+      );
+
+      // 앱 상태 정리
+      await AppStateService().clearAppState();
+      debugPrint('✅ 앱 상태 정리 완료');
+
+      // FCM 토큰 제거
+      await NotificationService().removeFCMToken();
+      debugPrint('✅ FCM 토큰 제거 완료');
+
+      // Firebase Auth 로그아웃
+      await FirebaseAuth.instance.signOut();
+      debugPrint('✅ Firebase 로그아웃 완료');
+
+      // 로딩 다이얼로그 닫기
+      if (context.mounted) {
+        Navigator.pop(context);
+        // 로그아웃 후 홈 화면으로 이동
+        Navigator.pushReplacementNamed(context, '/');
+      }
+    } catch (error) {
+      debugPrint('❌ 로그아웃 실패: $error');
+
+      // 로딩 다이얼로그 닫기
+      if (context.mounted) {
+        Navigator.pop(context);
+        // 오류 처리
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('로그아웃 실패: $error')));
+      }
+    }
   }
 
   @override

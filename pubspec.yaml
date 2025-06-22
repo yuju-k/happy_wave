@@ -21,6 +21,7 @@ dependencies:
   firebase_ai: ^2.0.0
   flutter_launcher_icons: ^0.14.3
   firebase_messaging: ^15.2.7
+  flutter_local_notifications: ^19.3.0
 
 dev_dependencies:
   flutter_test:
