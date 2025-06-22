@@ -27,49 +27,141 @@ class _ChatOutputState extends State<ChatOutput> {
   final MessageService _messageService = MessageService();
   final ScrollController _scrollController = ScrollController();
   final List<types.Message> _messages = [];
-
-  // 각 메시지별로 원본 컨테이너 표시 상태를 관리하는 맵
   final Map<String, bool> _showOriginalMap = {};
+
+  bool _isLoadingOlder = false;
+  bool _hasMoreMessages = true;
+  bool _isInitialLoad = true;
 
   @override
   void initState() {
     super.initState();
-    _subscribeToMessages();
+    _loadInitialMessages();
+    _scrollController.addListener(_onScroll);
   }
 
-  /// 실시간 메시지 스트림을 구독하여 새 메시지를 수신합니다.
-  void _subscribeToMessages() {
+  /// 초기 메시지 로드
+  Future<void> _loadInitialMessages() async {
     try {
-      _messageService
-          .streamNewMessages(widget.chatRoomId)
-          .listen(
-            (newMessage) {
-              if (!mounted) return;
+      final initialMessages = await _messageService.loadInitialMessages(
+        roomId: widget.chatRoomId,
+      );
 
-              setState(() {
-                _messages.add(newMessage);
-                // 새 메시지의 원본 컨테이너는 기본적으로 숨김
-                _showOriginalMap[newMessage.id] = false;
-              });
+      if (!mounted) return;
 
-              // 다음 프레임에서 스크롤을 리스트 끝으로 이동
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _scrollToEnd();
-              });
-            },
-            onError: (error) {
-              if (mounted) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('메시지 스트림 오류: $error')));
-              }
-            },
-          );
+      setState(() {
+        _messages.addAll(initialMessages);
+        _isInitialLoad = false;
+        // 각 메시지의 원본 컨테이너 상태 초기화
+        for (final message in initialMessages) {
+          _showOriginalMap[message.id] = false;
+        }
+      });
+
+      // 초기 로드 후 맨 아래로 스크롤
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToEnd();
+      });
+
+      // 초기 로드 완료 후 새 메시지 구독 시작
+      _subscribeToNewMessages();
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('메시지 구독 초기화 오류: $error')));
+        ).showSnackBar(SnackBar(content: Text('메시지 로드 오류: $error')));
+      }
+    }
+  }
+
+  /// 새 메시지 실시간 구독
+  void _subscribeToNewMessages() {
+    // 현재 가장 최신 메시지의 시간을 기준으로 스트리밍 시작
+    DateTime? afterTime;
+    if (_messages.isNotEmpty) {
+      final latestMessage = _messages.last;
+      afterTime = DateTime.fromMillisecondsSinceEpoch(latestMessage.createdAt!);
+    }
+
+    _messageService
+        .streamNewMessages(widget.chatRoomId, afterTime: afterTime)
+        .listen(
+          (newMessage) {
+            if (!mounted) return;
+
+            setState(() {
+              _messages.add(newMessage);
+              _showOriginalMap[newMessage.id] = false;
+
+              // 메모리 관리: 너무 많은 메시지가 쌓이면 오래된 것 제거
+              _messageService.clearOldMessagesFromMemory(_messages);
+            });
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _scrollToEnd();
+            });
+          },
+          onError: (error) {
+            if (mounted) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('메시지 스트림 오류: $error')));
+            }
+          },
+        );
+  }
+
+  /// 스크롤 이벤트 처리 (상단 도달 시 이전 메시지 로드)
+  void _onScroll() {
+    if (_scrollController.position.pixels <= 100 && // 상단 근처
+        !_isLoadingOlder &&
+        _hasMoreMessages &&
+        !_isInitialLoad) {
+      _loadOlderMessages();
+    }
+  }
+
+  /// 이전 메시지 로드 (페이지네이션)
+  Future<void> _loadOlderMessages() async {
+    if (_messages.isEmpty) return;
+
+    setState(() {
+      _isLoadingOlder = true;
+    });
+
+    try {
+      final oldestMessage = _messages.first;
+      final beforeTime = DateTime.fromMillisecondsSinceEpoch(
+        oldestMessage.createdAt!,
+      );
+
+      final olderMessages = await _messageService.loadOlderMessages(
+        roomId: widget.chatRoomId,
+        beforeTime: beforeTime,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        if (olderMessages.isEmpty) {
+          _hasMoreMessages = false;
+        } else {
+          _messages.insertAll(0, olderMessages);
+          // 새로 로드된 메시지들의 원본 컨테이너 상태 초기화
+          for (final message in olderMessages) {
+            _showOriginalMap[message.id] = false;
+          }
+        }
+        _isLoadingOlder = false;
+      });
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _isLoadingOlder = false;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('이전 메시지 로드 오류: $error')));
       }
     }
   }
@@ -100,26 +192,44 @@ class _ChatOutputState extends State<ChatOutput> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      controller: _scrollController,
-      itemCount: _messages.length,
-      itemBuilder: (context, index) {
-        final message = _messages[index];
-        if (message is! types.TextMessage) return const SizedBox.shrink();
+    if (_isInitialLoad) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-        final isMyMessage = message.author.id == widget.myUserId;
-        final createdTime = DateTime.fromMillisecondsSinceEpoch(
-          message.createdAt!,
-        );
-        final formattedTime = DateFormat('HH:mm').format(createdTime);
+    return Column(
+      children: [
+        // 상단 로딩 인디케이터
+        if (_isLoadingOlder)
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: const CircularProgressIndicator(),
+          ),
 
-        return _buildMessageBubble(
-          context,
-          message: message,
-          isMyMessage: isMyMessage,
-          formattedTime: formattedTime,
-        );
-      },
+        // 메시지 리스트
+        Expanded(
+          child: ListView.builder(
+            controller: _scrollController,
+            itemCount: _messages.length,
+            itemBuilder: (context, index) {
+              final message = _messages[index];
+              if (message is! types.TextMessage) return const SizedBox.shrink();
+
+              final isMyMessage = message.author.id == widget.myUserId;
+              final createdTime = DateTime.fromMillisecondsSinceEpoch(
+                message.createdAt!,
+              );
+              final formattedTime = DateFormat('HH:mm').format(createdTime);
+
+              return _buildMessageBubble(
+                context,
+                message: message,
+                isMyMessage: isMyMessage,
+                formattedTime: formattedTime,
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

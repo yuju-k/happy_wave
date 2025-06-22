@@ -76,6 +76,11 @@ class _ChatPageState extends State<ChatPage> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  /// 설정 페이지로 이동합니다.
+  void _navigateToSettings() {
+    Navigator.pushNamed(context, '/settings');
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading || _chatRoomId == null) {
@@ -86,20 +91,25 @@ class _ChatPageState extends State<ChatPage> {
       appBar: AppBar(
         title: Text(_otherUserName ?? ''),
         centerTitle: true,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child:
+              _otherProfileImage != null
+                  ? CircleAvatar(
+                    radius: 22,
+                    backgroundImage: NetworkImage(_otherProfileImage!),
+                  )
+                  : const CircleAvatar(
+                    radius: 22,
+                    backgroundColor: Colors.white60,
+                    child: Icon(Icons.person, size: 22),
+                  ),
+        ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child:
-                _otherProfileImage != null
-                    ? CircleAvatar(
-                      radius: 22,
-                      backgroundImage: NetworkImage(_otherProfileImage!),
-                    )
-                    : const CircleAvatar(
-                      radius: 22,
-                      backgroundColor: Colors.white60,
-                      child: Icon(Icons.person, size: 22),
-                    ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: _navigateToSettings,
+            tooltip: '설정',
           ),
         ],
       ),

@@ -6,6 +6,7 @@ import 'home.dart';
 import 'auth/sign_up.dart';
 import 'auth/sign_in.dart';
 import 'profile/profile.dart';
+import 'settings.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +27,7 @@ class MainApp extends StatelessWidget {
         '/sign-in': (context) => const SignInPage(),
         '/sign-up': (context) => const SignUpPage(),
         '/profile': (context) => const ProfilePage(),
+        '/settings': (context) => const SettingsPage(),
       },
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFEDFFFE),
