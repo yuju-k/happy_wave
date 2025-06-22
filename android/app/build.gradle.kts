@@ -45,3 +45,8 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:33.0.0")) // 최신 BOM 버전 확인 후 입력
+    implementation("com.google.firebase:firebase-messaging-ktx")
+}
