@@ -6,7 +6,7 @@ import 'home.dart';
 import 'auth/sign_up.dart';
 import 'auth/sign_in.dart';
 import 'profile/profile.dart';
-import 'settings.dart';
+import 'settings/settings_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
