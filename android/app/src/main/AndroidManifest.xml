@@ -32,14 +32,13 @@
             android:value="2" />
 
         <meta-data
-            android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@mipmap/ic_launcher" />
+            android:name="firebase_messaging_auto_init_enabled"
+            android:value="false" />
+
         <meta-data
-            android:name="com.google.firebase.messaging.default_notification_color"
-            android:resource="@color/my_notification_color" />
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="high_importance_channel" />
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
+            
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

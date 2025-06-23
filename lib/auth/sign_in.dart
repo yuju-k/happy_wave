@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'reset_password.dart';
 import 'auth_firebase.dart';
+import '../services/notification_service.dart'; // NotificationService 임포트
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -83,6 +84,8 @@ class _SignInPageState extends State<SignInPage> {
     if (!mounted) return;
 
     if (result == null) {
+      // 로그인 성공 시 NotificationService 초기화
+      await NotificationService().initialize();
       Navigator.pushNamedAndRemoveUntil(
         context,
         '/home', // 이동할 경로 이름

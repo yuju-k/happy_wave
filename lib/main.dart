@@ -10,12 +10,18 @@ import 'profile/profile.dart';
 import 'settings.dart';
 import 'services/notification_service.dart';
 import 'services/app_state_service.dart';
+import 'chat/chat_page.dart';
 
-// 백그라운드 메시지 핸들러
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  debugPrint('백그라운드 메시지 수신: ${message.messageId}');
+  // Firebase 초기화 후 NotificationService 초기화
+  await NotificationService().initialize();
+  // 백그라운드에서 로컬 알림을 표시하도록 NotificationService의 정적 메서드 호출
+  await NotificationService.showBackgroundNotification(message);
+  debugPrint("Handling a background message: ${message.messageId}");
 }
 
 void main() async {
@@ -43,6 +49,18 @@ class _MainAppState extends State<MainApp> {
     super.initState();
     // 앱 상태 서비스 초기화
     AppStateService().initialize();
+
+    // NotificationService에 navigatorKey 전달
+    NotificationService().initialize(navigatorKey: navigatorKey); // 초기화 시 키 전달
+    NotificationService().setupInteractedMessage();
+
+    // 포그라운드 메시지 리스너 (NotificationService에서 처리하므로 여기서는 단순 로깅만)
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint('Got a message whilst in the foreground!');
+      debugPrint('Message data: ${message.data}');
+      // NotificationService에서 포그라운드 알림 처리
+      NotificationService().handleForegroundNotification(message);
+    });
   }
 
   @override
@@ -63,6 +81,18 @@ class _MainAppState extends State<MainApp> {
         '/sign-up': (context) => const SignUpPage(),
         '/profile': (context) => const ProfilePage(),
         '/settings': (context) => const SettingsPage(),
+        '/chat': (context) {
+          // ChatPage 라우트 추가 및 인자 전달 로직
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
+          final chatRoomId = args?['chatRoomId'] as String?;
+          if (chatRoomId == null) {
+            // chatRoomId가 없으면 홈으로 리다이렉트 또는 에러 처리
+            return const HomePage();
+          }
+          return ChatPage(chatRoomId: chatRoomId); // chatRoomId 전달
+        },
       },
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFEDFFFE),

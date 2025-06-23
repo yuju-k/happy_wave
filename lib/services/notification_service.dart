@@ -1,4 +1,3 @@
-// lib/services/notification_service.dart
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -16,24 +15,21 @@ class NotificationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   bool _isInitialized = false;
+  GlobalKey<NavigatorState>? _navigatorKey; // Navigator Key 추가
 
-  // 초기화
-  Future<void> initialize() async {
+  // 초기화 메서드에 navigatorKey 인자 추가
+  Future<void> initialize({GlobalKey<NavigatorState>? navigatorKey}) async {
     if (_isInitialized) return;
 
+    if (navigatorKey != null) {
+      _navigatorKey = navigatorKey;
+    }
+
     try {
-      // 권한 요청
       await _requestPermissions();
-
-      // 로컬 알림 초기화
       await _initializeLocalNotifications();
-
-      // FCM 토큰 설정
       await _setupFCMToken();
-
-      // 메시지 리스너 설정
       _setupMessageListeners();
-
       _isInitialized = true;
       debugPrint('NotificationService 초기화 완료');
     } catch (e) {
@@ -127,38 +123,64 @@ class NotificationService {
   // 메시지 리스너 설정
   void _setupMessageListeners() {
     // 포그라운드 메시지
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    FirebaseMessaging.onMessage.listen((message) {
+      handleForegroundNotification(message); // public 메서드를 호출하도록 변경
+    });
 
-    // 백그라운드 메시지 탭
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundMessageTap);
-
-    // 앱 종료 상태에서 메시지 탭 처리
-    _handleTerminatedAppMessage();
-  }
-
-  // 포그라운드에서 메시지 수신 (알림 표시하지 않음)
-  Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    debugPrint('포그라운드 메시지 수신: ${message.messageId}');
-    debugPrint('포그라운드에서는 알림을 표시하지 않습니다.');
-
-    // 포그라운드에서는 알림을 표시하지 않음
-    // 메시지는 이미 채팅 화면에서 실시간으로 표시되고 있음
-  }
-
-  // 백그라운드에서 알림 탭
-  void _handleBackgroundMessageTap(RemoteMessage message) {
-    debugPrint('백그라운드 알림 탭: ${message.messageId}');
-    _navigateToChat(message);
-  }
-
-  // 앱 종료 상태에서 알림 탭 처리
-  void _handleTerminatedAppMessage() {
-    FirebaseMessaging.instance.getInitialMessage().then((message) {
-      if (message != null) {
-        debugPrint('앱 종료 상태에서 알림 탭: ${message.messageId}');
-        _navigateToChat(message);
+    // 백그라운드 메시지 탭 (RemoteMessage에서 chatRoomId 추출하여 전달)
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      //
+      debugPrint('백그라운드 알림 탭: ${message.messageId}');
+      final chatRoomId = message.data['chatRoomId'] as String?; //
+      if (chatRoomId != null) {
+        //
+        _navigateToChat(chatRoomId); //
       }
     });
+  }
+
+  // 앱 종료 상태에서 알림 탭 처리 (별도의 public 메서드로 분리)
+  Future<void> setupInteractedMessage() async {
+    RemoteMessage? initialMessage =
+        await FirebaseMessaging.instance.getInitialMessage();
+
+    if (initialMessage != null) {
+      final chatRoomId = initialMessage.data['chatRoomId'] as String?;
+      if (chatRoomId != null) {
+        _navigateToChat(chatRoomId);
+      }
+    }
+  }
+
+  // 포그라운드에서 메시지 수신 시 로컬 알림 표시 (Public 메서드)
+  Future<void> handleForegroundNotification(RemoteMessage message) async {
+    debugPrint('포그라운드 메시지 수신: ${message.messageId}');
+    // 포그라운드에서도 로컬 알림을 띄우고 싶을 때만 이 함수를 호출
+    await _showLocalNotification(message);
+  }
+
+  // 알림 탭 처리 (payload에서 chatRoomId 직접 받음)
+  void _onNotificationTapped(NotificationResponse response) {
+    final chatRoomId = response.payload;
+    if (chatRoomId != null) {
+      debugPrint('알림 탭됨 - 채팅방: $chatRoomId');
+      _navigateToChat(chatRoomId); // chatRoomId를 직접 전달
+    }
+  }
+
+  // 채팅으로 이동 (chatRoomId만 받도록 수정)
+  void _navigateToChat(String chatRoomId) {
+    debugPrint('채팅방으로 이동: $chatRoomId');
+    if (_navigatorKey?.currentState != null) {
+      _navigatorKey!.currentState!.pushNamed(
+        '/chat',
+        arguments: {'chatRoomId': chatRoomId},
+      );
+    } else {
+      debugPrint('NavigatorState가 아직 준비되지 않았습니다.');
+      // 대안: 앱이 완전히 종료된 상태에서 알림을 탭했을 경우,
+      // getInitialMessage에서 처리되므로 여기서는 특별한 조치 없이 로그만 남겨도 됨.
+    }
   }
 
   // 로컬 알림 표시
@@ -186,29 +208,24 @@ class NotificationService {
       iOS: iosDetails,
     );
 
+    // payload에 chatRoomId를 저장하여 알림 탭 시 사용
     await _localNotifications.show(
       notification.hashCode,
       notification.title,
       notification.body,
       details,
-      payload: message.data['chatRoomId'],
+      payload: message.data['chatRoomId'] as String?, // payload는 String만 가능
     );
   }
 
-  // 알림 탭 처리
-  void _onNotificationTapped(NotificationResponse response) {
-    final chatRoomId = response.payload;
-    if (chatRoomId != null) {
-      debugPrint('알림 탭됨 - 채팅방: $chatRoomId');
-      // TODO: 채팅 페이지로 이동하는 로직 구현
+  // 백그라운드에서 수신된 메시지를 처리하고 로컬 알림을 띄움 (main.dart에서 호출)
+  static Future<void> showBackgroundNotification(RemoteMessage message) async {
+    final NotificationService notificationService = NotificationService();
+    // 초기화가 안 되어 있을 경우를 대비 (새로운 VM 인스턴스에서 실행될 수 있음)
+    if (!notificationService._isInitialized) {
+      await notificationService.initialize();
     }
-  }
-
-  // 채팅으로 이동
-  void _navigateToChat(RemoteMessage message) {
-    // TODO: Navigator를 사용해 채팅 페이지로 이동
-    final chatRoomId = message.data['chatRoomId'];
-    debugPrint('채팅방으로 이동: $chatRoomId');
+    await notificationService._showLocalNotification(message);
   }
 
   // 상대방에게 메시지 알림 전송
@@ -229,7 +246,9 @@ class NotificationService {
         return;
       }
 
-      // Cloud Functions을 통해 알림 전송 요청
+      // Cloud Functions을 통해 알림 전송 요청 (서버에서 직접 FCM API 호출)
+      // 클라이언트에서 직접 FCM 메시지를 보내는 것은 보안상 권장되지 않습니다.
+      // Firestore에 알림 요청 문서를 추가하고, Cloud Function이 이를 트리거하여 FCM으로 메시지를 보내는 방식이 안전합니다.
       await _firestore.collection('notifications').add({
         'to': receiverToken,
         'notification': {'title': senderName, 'body': messageText},
@@ -261,10 +280,4 @@ class NotificationService {
       debugPrint('FCM 토큰 제거 실패: $e');
     }
   }
-}
-
-// 백그라운드 메시지 핸들러 (main.dart 외부에서 정의)
-@pragma('vm:entry-point')
-Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  debugPrint('백그라운드 메시지 수신: ${message.messageId}');
 }

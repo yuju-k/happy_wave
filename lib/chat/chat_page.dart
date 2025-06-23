@@ -5,7 +5,9 @@ import 'widgets/chat_input/chat_input.dart';
 import 'widgets/chat_output.dart';
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({super.key});
+  final String? chatRoomId; // chatRoomId를 인자로 받도록 수정
+
+  const ChatPage({super.key, this.chatRoomId}); // 생성자 수정
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -24,6 +26,8 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
+    // 위젯의 chatRoomId가 전달되면 사용, 아니면 조회
+    _chatRoomId = widget.chatRoomId;
     _initializeChat();
   }
 
@@ -37,16 +41,20 @@ class _ChatPageState extends State<ChatPage> {
         return;
       }
 
-      final roomId = await _userService.fetchChatRoomIdForUser(user.uid);
-      if (roomId == null) {
-        _showErrorSnackBar('채팅방 정보를 불러오지 못했습니다.');
-        setState(() => _isLoading = false);
-        return;
+      // chatRoomId가 null이면 UserService에서 조회
+      if (_chatRoomId == null) {
+        final roomId = await _userService.fetchChatRoomIdForUser(user.uid);
+        if (roomId == null) {
+          _showErrorSnackBar('채팅방 정보를 불러오지 못했습니다.');
+          setState(() => _isLoading = false);
+          return;
+        }
+        _chatRoomId = roomId; // 조회된 roomId로 업데이트
       }
 
       final myProfile = await _userService.fetchMyProfile(user.uid);
       final otherUserInfo = await _userService.fetchOtherUserInfo(
-        roomId,
+        _chatRoomId!, // chatRoomId는 이제 null이 아님
         user.uid,
       );
 
@@ -55,7 +63,6 @@ class _ChatPageState extends State<ChatPage> {
       }
 
       setState(() {
-        _chatRoomId = roomId;
         _myName = myProfile?['name'];
         _otherUserId = otherUserInfo?['otherUserId'];
         _otherUserName = otherUserInfo?['otherName'];

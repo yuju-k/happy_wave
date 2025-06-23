@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'auth_firebase.dart';
+import '../services/notification_service.dart'; // NotificationService 임포트
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -74,6 +75,8 @@ class _SignUpPageState extends State<SignUpPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('회원가입 완료')));
+      // 회원가입 성공 시 NotificationService 초기화
+      await NotificationService().initialize();
       Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
     } else {
       ScaffoldMessenger.of(
