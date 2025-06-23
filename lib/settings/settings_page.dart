@@ -20,6 +20,7 @@ class SettingsPage extends StatelessWidget {
       confirmColor: Colors.red,
     );
 
+    if (!context.mounted) return;
     if (confirmed == true) {
       await SettingsService().disconnect(context);
     }
@@ -29,9 +30,11 @@ class SettingsPage extends StatelessWidget {
     FirebaseAuth.instance
         .signOut()
         .then((_) {
+          if (!context.mounted) return;
           Navigator.pushReplacementNamed(context, '/');
         })
         .catchError((error) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('로그아웃 실패')));

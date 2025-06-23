@@ -28,6 +28,7 @@ class SettingsService {
       final userData = await _fetchUserData(user.uid);
       if (userData == null) {
         debugPrint('❌ 사용자 데이터가 없음');
+        if (!context.mounted) return;
         Navigator.pop(context);
         return;
       }
@@ -35,6 +36,7 @@ class SettingsService {
       final chatroomId = userData['chatroomId'] as String?;
       if (chatroomId == null) {
         debugPrint('❌ chatroomId가 없음 - 연결된 상태가 아님');
+        if (!context.mounted) return;
         Navigator.pop(context);
         return;
       }
@@ -43,6 +45,7 @@ class SettingsService {
       await _updateConnectionStatus(user.uid, otherUserUid, chatroomId);
       await _cleanupInvites(user.uid, otherUserUid);
 
+      if (!context.mounted) return;
       Navigator.pop(context); // Close loading dialog
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
