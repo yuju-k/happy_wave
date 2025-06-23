@@ -1,3 +1,4 @@
+// lib/main.dart - 개선된 버전
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,14 +15,24 @@ import 'chat/chat_page.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
+// 백그라운드 메시지 핸들러 (개선됨)
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Firebase 초기화
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // Firebase 초기화 후 NotificationService 초기화
-  await NotificationService().initialize();
-  // 백그라운드에서 로컬 알림을 표시하도록 NotificationService의 정적 메서드 호출
-  await NotificationService.showBackgroundNotification(message);
-  debugPrint("Handling a background message: ${message.messageId}");
+
+  debugPrint("백그라운드 메시지 수신: ${message.messageId}");
+  debugPrint("제목: ${message.notification?.title}");
+  debugPrint("내용: ${message.notification?.body}");
+  debugPrint("데이터: ${message.data}");
+
+  // 백그라운드에서 로컬 알림 표시
+  try {
+    await NotificationService.showBackgroundNotification(message);
+    debugPrint("백그라운드 알림 표시 완료");
+  } catch (e) {
+    debugPrint("백그라운드 알림 표시 실패: $e");
+  }
 }
 
 void main() async {
@@ -43,36 +54,70 @@ class MainApp extends StatefulWidget {
   State<MainApp> createState() => _MainAppState();
 }
 
-class _MainAppState extends State<MainApp> {
+class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    // 앱 상태 서비스 초기화
-    AppStateService().initialize();
-
-    // NotificationService에 navigatorKey 전달
-    NotificationService().initialize(navigatorKey: navigatorKey); // 초기화 시 키 전달
-    NotificationService().setupInteractedMessage();
-
-    // 포그라운드 메시지 리스너 (NotificationService에서 처리하므로 여기서는 단순 로깅만)
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Got a message whilst in the foreground!');
-      debugPrint('Message data: ${message.data}');
-      // NotificationService에서 포그라운드 알림 처리
-      NotificationService().handleForegroundNotification(message);
-    });
+    WidgetsBinding.instance.addObserver(this);
+    _initializeServices();
   }
 
   @override
   void dispose() {
-    // 앱 상태 서비스 정리
+    WidgetsBinding.instance.removeObserver(this);
     AppStateService().dispose();
     super.dispose();
+  }
+
+  // 서비스들 초기화
+  Future<void> _initializeServices() async {
+    try {
+      // 앱 상태 서비스 초기화
+      AppStateService().initialize();
+
+      // 알림 서비스 초기화
+      await NotificationService().initialize(navigatorKey: navigatorKey);
+
+      // 포그라운드 메시지 리스너
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        debugPrint('포그라운드 메시지 수신: ${message.messageId}');
+        // NotificationService에서 처리
+        NotificationService().handleForegroundNotification(message);
+      });
+
+      // 앱 종료 상태에서 알림 탭 처리 설정
+      await NotificationService().setupInteractedMessage();
+
+      debugPrint('모든 서비스 초기화 완료');
+    } catch (e) {
+      debugPrint('서비스 초기화 실패: $e');
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    debugPrint('앱 생명주기 상태 변경: $state');
+
+    // 앱이 포그라운드로 돌아왔을 때 알림 탭 확인
+    if (state == AppLifecycleState.resumed) {
+      _checkForPendingNotifications();
+    }
+  }
+
+  // 대기 중인 알림 확인
+  Future<void> _checkForPendingNotifications() async {
+    try {
+      await NotificationService().setupInteractedMessage();
+    } catch (e) {
+      debugPrint('대기 중인 알림 확인 실패: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey, // Navigator Key 설정
       initialRoute: '/',
       routes: {
         '/': (context) => const MainPage(),
@@ -82,16 +127,14 @@ class _MainAppState extends State<MainApp> {
         '/profile': (context) => const ProfilePage(),
         '/settings': (context) => const SettingsPage(),
         '/chat': (context) {
-          // ChatPage 라우트 추가 및 인자 전달 로직
           final args =
               ModalRoute.of(context)?.settings.arguments
                   as Map<String, dynamic>?;
           final chatRoomId = args?['chatRoomId'] as String?;
           if (chatRoomId == null) {
-            // chatRoomId가 없으면 홈으로 리다이렉트 또는 에러 처리
             return const HomePage();
           }
-          return ChatPage(chatRoomId: chatRoomId); // chatRoomId 전달
+          return ChatPage(chatRoomId: chatRoomId);
         },
       },
       theme: ThemeData(
@@ -162,7 +205,7 @@ class MainPage extends StatelessWidget {
         } else {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             if (snapshot.hasData) {
-              // 로그인된 사용자의 경우 알림 서비스 초기화
+              // 로그인된 사용자의 경우 알림 서비스 다시 초기화 (토큰 갱신 등)
               await NotificationService().initialize();
               Navigator.pushReplacementNamed(context, '/home');
             } else {
