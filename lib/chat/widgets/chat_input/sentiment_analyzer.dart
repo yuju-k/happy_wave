@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_vertexai/firebase_vertexai.dart';
+//import 'package:firebase_vertexai/firebase_vertexai.dart';
+import 'package:firebase_ai/firebase_ai.dart';
 import '../../services/message_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SentimentAnalyzer {
   // ===========================================
@@ -13,9 +15,9 @@ class SentimentAnalyzer {
   // ===========================================
   // AI 관련 변수들
   // ===========================================
-  final _model = FirebaseVertexAI.instance.generativeModel(
-    model: 'gemini-2.0-flash',
-  );
+  final _model = FirebaseAI.vertexAI(
+    auth: FirebaseAuth.instance,
+  ).generativeModel(model: 'gemini-2.0-flash');
   late final ChatSession _chat;
   final List<Content> _history = [];
 

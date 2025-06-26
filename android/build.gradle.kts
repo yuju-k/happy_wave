@@ -1,3 +1,13 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.google.gms:google-services:4.4.2") // Google Services 플러그인
+    }
+}
+
 allprojects {
     repositories {
         google()

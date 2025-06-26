@@ -22,8 +22,9 @@ class _ProfilePageState extends State<ProfilePage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _statusController;
-  File? _profileImage;
-  String? _storedImageUrl;
+  File? _profileImage; // 새로 선택한 이미지
+  String? _storedImageUrl; // 기존에 저장된 이미지 URL
+  bool _isImageChanged = false; // 이미지가 변경되었는지 추적
 
   @override
   void initState() {
@@ -57,7 +58,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // 프로필 저장
+  // 프로필 저장 (이미지 업로드 포함)
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -69,7 +70,17 @@ class _ProfilePageState extends State<ProfilePage> {
       final status = _statusController.text.trim();
       final service = ProfileService();
 
+      // 이미지가 변경된 경우에만 업로드
+      String? imageUrl = _storedImageUrl;
+      if (_isImageChanged && _profileImage != null) {
+        imageUrl = await service.uploadProfileImage(user.uid, _profileImage!);
+      }
+
+      // 프로필 정보 업데이트 (이미지 URL 포함)
       await service.updateProfile(user.uid, name, status);
+      if (imageUrl != null) {
+        await service.updateProfileImage(user.uid, imageUrl);
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -85,8 +96,8 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // 이미지 선택 및 업로드
-  Future<void> _pickAndUploadImage() async {
+  // 이미지 선택만 수행 (업로드는 저장 시)
+  Future<void> _pickImage() async {
     if (!await Permission.photos.request().isGranted) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -99,19 +110,11 @@ class _ProfilePageState extends State<ProfilePage> {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile == null || !mounted) return;
 
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
     final imageFile = File(pickedFile.path);
-    setState(() => _profileImage = imageFile);
-
-    final service = ProfileService();
-    final downloadUrl = await service.uploadProfileImage(user.uid, imageFile);
-    await service.updateProfileImage(user.uid, downloadUrl);
-
-    if (mounted) {
-      setState(() => _storedImageUrl = downloadUrl);
-    }
+    setState(() {
+      _profileImage = imageFile;
+      _isImageChanged = true;
+    });
   }
 
   @override
@@ -225,7 +228,7 @@ class _ProfilePageState extends State<ProfilePage> {
               backgroundColor: const Color(0xFFE0F7FA),
               backgroundImage:
                   _profileImage != null
-                      ? FileImage(_profileImage!)
+                      ? FileImage(_profileImage!) // 새로 선택한 이미지 우선
                       : (_storedImageUrl != null
                           ? NetworkImage(_storedImageUrl!)
                           : null),
@@ -242,7 +245,7 @@ class _ProfilePageState extends State<ProfilePage> {
               bottom: 0,
               right: 0,
               child: GestureDetector(
-                onTap: _pickAndUploadImage,
+                onTap: _pickImage, // 이미지 선택만 수행
                 child: Container(
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,

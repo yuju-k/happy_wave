@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:happy_wave/settings.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'auth/auth_firebase.dart';
 import 'profile/profile.dart';
 import 'system_log.dart';
@@ -16,7 +16,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
   bool _isConnected = false;
 
   @override
@@ -24,7 +23,92 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _checkNameExists();
     _logUserLogin();
+    _saveDeviceToken();
+    _initializeFCMListeners();
     InviteAlertListener.startListening(context);
+  }
+
+  // FCM 토큰을 얻어 Firestore에 저장하는 함수
+  Future<void> _saveDeviceToken() async {
+    final user = AuthService().currentUser;
+    if (user == null) {
+      debugPrint('FCM token save failed: User not logged in.');
+      return;
+    }
+
+    try {
+      // 1. 알림 권한 요청
+      NotificationSettings settings = await FirebaseMessaging.instance
+          .requestPermission(
+            alert: true,
+            announcement: false,
+            badge: true,
+            carPlay: false,
+            criticalAlert: false,
+            provisional: false,
+            sound: true,
+          );
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        debugPrint('User granted permission');
+      } else if (settings.authorizationStatus ==
+          AuthorizationStatus.provisional) {
+        debugPrint('User granted provisional permission');
+      } else {
+        debugPrint('User declined or has not accepted permission');
+        return; // 권한이 없으면 토큰을 저장하지 않습니다.
+      }
+
+      // 2. FCM 토큰 가져오기
+      String? token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'fcmToken': token,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        debugPrint('FCM Token saved to Firestore for UID: ${user.uid}');
+      } else {
+        debugPrint('FCM token is null, cannot save.');
+      }
+    } catch (e) {
+      debugPrint('Error saving FCM token: $e');
+    }
+  }
+
+  // FCM 알림 수신 리스너 초기화
+  void _initializeFCMListeners() {
+    // 포그라운드 메시지 처리
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint('Got a message whilst in the foreground!');
+      debugPrint('Message data: ${message.data}');
+
+      if (message.notification != null) {
+        debugPrint(
+          'Message also contained a notification: ${message.notification?.title}, ${message.notification?.body}',
+        );
+        // TODO: flutter_local_notifications 패키지를 사용하여 사용자에게 로컬 알림을 표시
+        // 이 부분은 나중에 로컬 알림 UI를 구현할 때 추가할 수 있습니다.
+      }
+    });
+
+    // 백그라운드에서 앱을 열었을 때 메시지 처리
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      debugPrint('App opened from background by notification!');
+      debugPrint('Message data: ${message.data}');
+      // TODO: 알림 데이터에 따라 특정 채팅방으로 이동하는 로직 구현
+      // 예: Navigator.pushNamed(context, '/chat', arguments: message.data['roomId']);
+    });
+
+    // 앱이 완전히 종료된 상태에서 알림을 통해 실행되었을 때 메시지 처리
+    FirebaseMessaging.instance.getInitialMessage().then((
+      RemoteMessage? message,
+    ) {
+      if (message != null) {
+        debugPrint('App launched from terminated state by notification!');
+        debugPrint('Message data: ${message.data}');
+        // TODO: 알림 데이터에 따라 특정 채팅방으로 이동하는 로직 구현
+      }
+    });
   }
 
   Future<void> _logUserLogin() async {
@@ -54,56 +138,11 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _onItemTapped(int index) {
-    if (index == 1) {
-      // 대화 탭 클릭 시 ChatPage로 이동
-      if (!_isConnected) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("상대방과 연결되어야 채팅이 가능합니다.")));
-        return;
-      }
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const ChatPage()),
-      );
-      return;
-    }
-
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final List<Widget> pages = [
-      _buildHomeTab(),
-      _nullPage(),
-      const SettingsPage(),
-    ];
-
-    return Scaffold(
-      body: pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_rounded),
-            label: '대화',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHomeTab() {
     final user = AuthService().currentUser;
     if (user == null) {
-      return const Center(child: Text("로그인이 필요합니다."));
+      return const Scaffold(body: Center(child: Text("로그인이 필요합니다.")));
     }
 
     final userDoc = FirebaseFirestore.instance
@@ -114,7 +153,9 @@ class _HomePageState extends State<HomePage> {
       stream: userDoc.snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
 
         final data = snapshot.data!.data() as Map<String, dynamic>?;
@@ -129,39 +170,15 @@ class _HomePageState extends State<HomePage> {
           }
         });
 
+        // 연결 상태에 따라 다른 화면 표시
         if (!_isConnected) {
-          return InviteUserPage(); // 연결 안 된 상태
+          // 연결되지 않은 상태: 초대 화면 표시
+          return const InviteUserPage();
+        } else {
+          // 연결된 상태: 채팅 화면 표시
+          return const ChatPage();
         }
-
-        return _buildConnectedHome(); // 연결된 홈 콘텐츠 표시
       },
     );
-  }
-
-  Widget _buildConnectedHome() {
-    return Scaffold(
-      appBar: AppBar(title: const Text("상대방 이름")),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // 상대방 프로필 사진
-            const CircleAvatar(
-              radius: 80,
-              backgroundImage: AssetImage('assets/images/default_profile.png'),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              "상대방 상태 메시지",
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _nullPage() {
-    return const Center(child: Text("😊"));
   }
 }

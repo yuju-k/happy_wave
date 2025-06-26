@@ -131,7 +131,17 @@ class _InviteUserPageState extends State<InviteUserPage> {
     return Stack(
       children: [
         Scaffold(
-          appBar: AppBar(),
+          appBar: AppBar(
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.settings),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/settings');
+                },
+                tooltip: '설정',
+              ),
+            ],
+          ),
           body: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -235,7 +245,7 @@ class _InviteUserPageState extends State<InviteUserPage> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: _InviteUserConstants.pendingColor.withOpacity(0.3),
+                color: _InviteUserConstants.pendingColor.withValues(alpha: 0.3),
               ),
             ),
             child: Column(
