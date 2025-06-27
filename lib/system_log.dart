@@ -73,4 +73,34 @@ class SystemLogService {
       return null;
     }
   }
+
+  // 메시지 전송 count
+  Future<void> logMessageSent(String uid) async {
+    try {
+      final docRef = _firestore.collection('system_log').doc(uid);
+
+      await _firestore.runTransaction((transaction) async {
+        final docSnapshot = await transaction.get(docRef);
+
+        int currentCount = 0;
+        if (docSnapshot.exists) {
+          final data = docSnapshot.data();
+          if (data != null && data.containsKey('messageCount')) {
+            currentCount = data['messageCount'] as int;
+          }
+        }
+
+        // 카운트 1 증가
+        currentCount++;
+
+        // 문서에 업데이트 (merge: true로 기존 필드 보존)
+        transaction.set(docRef, {
+          'messageCount': currentCount,
+        }, SetOptions(merge: true));
+      });
+      debugPrint('User $uid message count increased.');
+    } catch (e) {
+      debugPrint('Error logging message sent for user $uid: $e');
+    }
+  }
 }
