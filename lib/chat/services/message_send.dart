@@ -40,6 +40,7 @@ Future<void> sendMessageToRoom({
       }, SetOptions(merge: true));
     });
 
+    // 메시지 카운트 시스템로그
     final SystemLogService systemLogService = SystemLogService();
     systemLogService.logMessageSent(authorId);
   } catch (e) {
