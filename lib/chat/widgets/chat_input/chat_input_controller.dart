@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/message_send.dart';
 import 'sentiment_analyzer.dart';
+import '../../../system_log.dart';
 
 class ChatInputController {
   // ===========================================
@@ -17,6 +18,7 @@ class ChatInputController {
   // ===========================================
   final TextEditingController textController = TextEditingController();
   late final SentimentAnalyzer _sentimentAnalyzer;
+  final SystemLogService _systemLogService = SystemLogService();
 
   String originalMessage = '';
   String sentimentResult = '';
@@ -125,6 +127,9 @@ class ChatInputController {
   void _handleSentimentResult(String sentiment, String suggestion) {
     sentimentResult = sentiment;
     suggestionResult = suggestion;
+
+    // 감정 분석 결과를 Firebase에 기록합니다. (uid를 함께 전달)
+    _systemLogService.logSentiment(myUserId, sentimentResult);
 
     if (_isNegativeWithSuggestion()) {
       _showSuggestionsPanel();

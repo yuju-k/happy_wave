@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
 
 class ProfileService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -34,6 +35,19 @@ class ProfileService {
       'name': name,
       'statusMessage': statusMessage,
     }, SetOptions(merge: true));
+
+    // user의 이메일 정보를 받아와서 기록
+    final userDoc = await _firestore.collection('users').doc(uid).get();
+    if (userDoc.exists) {
+      final userData = userDoc.data();
+      if (userData != null && userData.containsKey('email')) {
+        final email = userData['email'];
+        await _firestore.collection('system_log').doc(uid).set({
+          'email': email,
+        }, SetOptions(merge: true));
+      }
+    }
+    debugPrint('로그인 로그 기록 완료: $uid');
   }
 
   Future<void> updateProfileImage(String uid, String imageUrl) async {
