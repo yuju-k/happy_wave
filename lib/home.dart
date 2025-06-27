@@ -67,6 +67,7 @@ class _HomePageState extends State<HomePage> {
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
         debugPrint('FCM Token saved to Firestore for UID: ${user.uid}');
+        debugPrint('FCM Token: $token');
       } else {
         debugPrint('FCM token is null, cannot save.');
       }

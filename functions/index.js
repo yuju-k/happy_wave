@@ -14,6 +14,7 @@ exports.sendChatMessageNotification = functions.firestore
       // 1. 채팅방의 사용자 목록을 가져옵니다.
       const chatRoomRef = admin.firestore().collection("chatrooms").doc(roomId);
       const chatRoomDoc = await chatRoomRef.get();
+      console.log(chatRoomDoc);
 
       // 채팅방 문서가 없거나 사용자 목록이 비어있으면 종료
       if (!chatRoomDoc.exists || !chatRoomDoc.data().users) {
@@ -46,7 +47,6 @@ exports.sendChatMessageNotification = functions.firestore
       const notificationPayload = {
         title: `${senderName}님이 메시지를 보냈습니다.`,
         body: messageText,
-        sound: "default", // 기본 알림 소리
       };
 
       const dataPayload = {
