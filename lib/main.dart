@@ -11,10 +11,9 @@ import 'settings/settings_page.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  debugPrint("Handling a background message: ${message.messageId}");
-  // TODO: 백그라운드에서 받은 알림 처리 로직을 여기에 추가합니다.
-  // 예: flutter_local_notifications 패키지를 사용하여 로컬 알림 표시
+  await Firebase.initializeApp();
+  print("Handling a background message: ${message.messageId}");
+  // TODO: 백그라운드 메시지 처리 로직 추가
 }
 
 void main() async {

@@ -91,12 +91,10 @@ class _HomePageState extends State<HomePage> {
       }
     });
 
-    // 백그라운드에서 앱을 열었을 때 메시지 처리
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint('App opened from background by notification!');
-      debugPrint('Message data: ${message.data}');
-      // TODO: 알림 데이터에 따라 특정 채팅방으로 이동하는 로직 구현
-      // 예: Navigator.pushNamed(context, '/chat', arguments: message.data['roomId']);
+      print('A new onMessageOpenedApp event was published!');
+      print('Message data: ${message.data}');
+      // TODO: 알림 탭 시 처리 로직 추가
     });
 
     // 앱이 완전히 종료된 상태에서 알림을 통해 실행되었을 때 메시지 처리
