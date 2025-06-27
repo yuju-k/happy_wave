@@ -87,15 +87,13 @@ class _HomePageState extends State<HomePage> {
         debugPrint(
           'Message also contained a notification: ${message.notification?.title}, ${message.notification?.body}',
         );
-        // TODO: flutter_local_notifications 패키지를 사용하여 사용자에게 로컬 알림을 표시
         // 이 부분은 나중에 로컬 알림 UI를 구현할 때 추가할 수 있습니다.
       }
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('A new onMessageOpenedApp event was published!');
-      print('Message data: ${message.data}');
-      // TODO: 알림 탭 시 처리 로직 추가
+      debugPrint('A new onMessageOpenedApp event was published!');
+      debugPrint('Message data: ${message.data}');
     });
 
     // 앱이 완전히 종료된 상태에서 알림을 통해 실행되었을 때 메시지 처리
@@ -105,7 +103,6 @@ class _HomePageState extends State<HomePage> {
       if (message != null) {
         debugPrint('App launched from terminated state by notification!');
         debugPrint('Message data: ${message.data}');
-        // TODO: 알림 데이터에 따라 특정 채팅방으로 이동하는 로직 구현
       }
     });
   }

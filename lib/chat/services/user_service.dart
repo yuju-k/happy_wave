@@ -102,10 +102,9 @@ class UserService {
       }
 
       // 상대방 UID 찾기
-      final otherUserUid = users.firstWhere(
-        (uid) => uid != myUid,
-        orElse: () => null,
-      );
+      final otherUserUid =
+          users.firstWhere((uid) => uid != myUid, orElse: () => null)
+              as String?;
 
       if (otherUserUid == null) {
         debugPrint('No other user found in chatroom $roomId');

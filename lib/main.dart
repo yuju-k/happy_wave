@@ -12,8 +12,7 @@ import 'settings/settings_page.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  print("Handling a background message: ${message.messageId}");
-  // TODO: 백그라운드 메시지 처리 로직 추가
+  debugPrint("Handling a background message: ${message.messageId}");
 }
 
 void main() async {
