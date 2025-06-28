@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/gestures.dart';
 import '../services/message_service.dart';
 
 class ChatOutput extends StatefulWidget {
@@ -32,6 +34,12 @@ class _ChatOutputState extends State<ChatOutput> {
   bool _isLoadingOlder = false;
   bool _hasMoreMessages = true;
   bool _isInitialLoad = true;
+
+  // URL 감지를 위한 정규 표현식
+  static final RegExp _urlRegExp = RegExp(
+    r'(?:(?:https?|ftp):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[A-Z0-9+&@#\/%=~_|$])',
+    caseSensitive: false,
+  );
 
   @override
   void initState() {
@@ -184,6 +192,63 @@ class _ChatOutputState extends State<ChatOutput> {
     });
   }
 
+  /// URL을 안전하게 실행합니다.
+  Future<void> _launchURL(String url) async {
+    Uri uri = Uri.parse(url);
+    if (!uri.hasScheme) {
+      uri = Uri.parse('http://$url'); // 스키마가 없으면 http://를 붙여줍니다.
+    }
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('링크를 열 수 없습니다: $url')));
+      }
+    }
+  }
+
+  /// 텍스트 내 URL을 감지하고 클릭 가능하게 만듭니다.
+  TextSpan _buildClickableText(String text) {
+    final List<TextSpan> spans = [];
+    text.splitMapJoin(
+      _urlRegExp,
+      onMatch: (Match match) {
+        final url = match.group(0);
+        if (url != null) {
+          spans.add(
+            TextSpan(
+              text: url,
+              style: const TextStyle(
+                color: Colors.blue, // 링크 색상
+                decoration: TextDecoration.underline, // 밑줄
+              ),
+              recognizer:
+                  TapGestureRecognizer()
+                    ..onTap = () {
+                      _launchURL(url);
+                    },
+            ),
+          );
+        }
+        return '';
+      },
+      onNonMatch: (String nonMatch) {
+        spans.add(
+          TextSpan(
+            text: nonMatch,
+            style: const TextStyle(
+              color: Colors.black, // 텍스트 색상
+            ),
+          ),
+        );
+        return '';
+      },
+    );
+    return TextSpan(children: spans);
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -270,10 +335,11 @@ class _ChatOutputState extends State<ChatOutput> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   // 메시지 텍스트
+                  // 메시지 텍스트 (URL 감지 기능 적용)
                   Expanded(
-                    child: Text(
-                      message.text,
-                      style: const TextStyle(fontSize: 16, color: Colors.black),
+                    child: RichText(
+                      // RichText 위젯 사용
+                      text: _buildClickableText(message.text),
                       softWrap: true,
                     ),
                   ),
