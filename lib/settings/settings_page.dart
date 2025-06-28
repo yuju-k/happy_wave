@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'settings_service.dart';
 import 'connection_status_widget.dart';
 import 'confirmation_dialog.dart';
+import 'display_setting.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -65,6 +66,12 @@ class SettingsPage extends StatelessWidget {
           final hasPendingInvites =
               userData['pendingInvites'] != null &&
               (userData['pendingInvites'] as List).isNotEmpty;
+          final chatOriginalViewEnabled =
+              userData['chatOriginalViewEnabled'] as bool? ??
+              true; // Default to true
+          final chatOriginalToggleEnabled =
+              userData['chatOriginalToggleEnabled'] as bool? ??
+              true; // Default to true
 
           return Padding(
             padding: const EdgeInsets.all(24.0),
@@ -76,6 +83,19 @@ class SettingsPage extends StatelessWidget {
                   icon: const Icon(Icons.person),
                   label: const Text('프로필 설정'),
                   onPressed: () => _navigateToProfile(context),
+                ),
+                const SizedBox(height: 16),
+
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.no_encryption),
+                  label: const Text('채팅 표시 설정'),
+                  onPressed:
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DisplaySettingPage(),
+                        ),
+                      ),
                 ),
                 const SizedBox(height: 16),
 
@@ -110,6 +130,7 @@ class SettingsPage extends StatelessWidget {
                   ),
                   onPressed: () => _handleLogout(context),
                 ),
+                const SizedBox(height: 20),
               ],
             ),
           );

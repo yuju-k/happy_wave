@@ -9,6 +9,42 @@ class SettingsService {
     return FirebaseFirestore.instance.collection('users').doc(uid).snapshots();
   }
 
+  /// Updates the chatOriginalViewEnabled setting for the current user.
+  Future<void> updateChatOriginalViewEnabled(bool enabled) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      debugPrint('❌ 사용자 로그인되어 있지 않음 - chatOriginalViewEnabled 업데이트 실패');
+      return;
+    }
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
+        {'chatOriginalViewEnabled': enabled},
+      );
+      debugPrint('✅ chatOriginalViewEnabled 업데이트 완료: $enabled');
+    } catch (e) {
+      debugPrint('❌ chatOriginalViewEnabled 업데이트 오류: $e');
+      rethrow;
+    }
+  }
+
+  /// Updates the chatOriginalToggleEnabled setting for the current user.
+  Future<void> updateChatOriginalToggleEnabled(bool enabled) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      debugPrint('❌ 사용자 로그인되어 있지 않음 - chatOriginalToggleEnabled 업데이트 실패');
+      return;
+    }
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
+        {'chatOriginalToggleEnabled': enabled},
+      );
+      debugPrint('✅ chatOriginalToggleEnabled 업데이트 완료: $enabled');
+    } catch (e) {
+      debugPrint('❌ chatOriginalToggleEnabled 업데이트 오류: $e');
+      rethrow;
+    }
+  }
+
   // Perform disconnection
   Future<void> disconnect(BuildContext context) async {
     final user = FirebaseAuth.instance.currentUser;

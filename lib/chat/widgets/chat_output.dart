@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'chat_message_bubble.dart';
@@ -35,17 +37,49 @@ class ChatOutputState extends State<ChatOutput> {
   bool _hasMoreMessages = true;
   bool _isInitialLoad = true;
 
+  bool _chatOriginalViewEnabled = false; // Default value
+  bool _chatOriginalToggleEnabled = false; // Default value
+
   @override
   void initState() {
     super.initState();
     _loadInitialMessages();
     _scrollController.addListener(_handleScroll);
+    _listenToUserSettings();
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  /// Listens to real-time updates for user settings (e.g., original message display preference).
+  void _listenToUserSettings() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .snapshots()
+        .listen(
+          (doc) {
+            if (!mounted) return;
+            final data = doc.data();
+            if (data != null) {
+              setState(() {
+                _chatOriginalViewEnabled =
+                    data['chatOriginalViewEnabled'] as bool? ?? true;
+                _chatOriginalToggleEnabled =
+                    data['chatOriginalToggleEnabled'] as bool? ?? true;
+              });
+            }
+          },
+          onError: (error) {
+            debugPrint('Error listening to user settings: $error');
+          },
+        );
   }
 
   /// Loads initial messages for the chat room.
@@ -221,6 +255,8 @@ class ChatOutputState extends State<ChatOutput> {
                       _showOriginalMap[message.id] =
                           !(_showOriginalMap[message.id] ?? false);
                     }),
+                isOriginalMessageToggleEnabled: _chatOriginalToggleEnabled,
+                isOriginalViewEnabled: _chatOriginalViewEnabled,
               );
             },
           ),

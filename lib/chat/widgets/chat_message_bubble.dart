@@ -10,6 +10,8 @@ class ChatMessageBubble extends StatelessWidget {
   final bool isMyMessage;
   final bool showOriginal;
   final VoidCallback onToggleOriginal;
+  final bool isOriginalViewEnabled;
+  final bool isOriginalMessageToggleEnabled;
 
   const ChatMessageBubble({
     super.key,
@@ -17,6 +19,8 @@ class ChatMessageBubble extends StatelessWidget {
     required this.isMyMessage,
     required this.showOriginal,
     required this.onToggleOriginal,
+    required this.isOriginalViewEnabled,
+    required this.isOriginalMessageToggleEnabled,
   });
 
   /// Builds a clickable text span with detected URLs.
@@ -76,8 +80,8 @@ class ChatMessageBubble extends StatelessWidget {
     final originalMessage =
         message.metadata?['originalMessage'] as String? ?? '';
 
-    final isOriginalViewTrue = true;
-    final isOriginalMessageToggleTrue = true;
+    final displayOriginalView = isOriginalMessageToggleEnabled;
+    final displayOriginalToggle = isOriginalViewEnabled;
 
     return Align(
       alignment: isMyMessage ? Alignment.centerRight : Alignment.centerLeft,
@@ -126,9 +130,9 @@ class ChatMessageBubble extends StatelessWidget {
                               color: Colors.grey,
                             ),
                           ),
-                          if (isConverted && isOriginalViewTrue) ...[
+                          if (isConverted && displayOriginalView) ...[
                             const SizedBox(width: ChatConfig.iconSpacing),
-                            if (isOriginalMessageToggleTrue) ...[
+                            if (displayOriginalToggle) ...[
                               GestureDetector(
                                 onTap: onToggleOriginal,
                                 child: Icon(
@@ -157,7 +161,7 @@ class ChatMessageBubble extends StatelessWidget {
                   ),
                 ],
               ),
-              if (showOriginal && isOriginalViewTrue) ...[
+              if (showOriginal && displayOriginalView) ...[
                 const SizedBox(height: ChatConfig.spacing),
                 _buildOriginalMessageContainer(originalMessage),
               ],
