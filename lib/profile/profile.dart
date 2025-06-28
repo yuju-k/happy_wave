@@ -25,6 +25,7 @@ class _ProfilePageState extends State<ProfilePage> {
   File? _profileImage; // 새로 선택한 이미지
   String? _storedImageUrl; // 기존에 저장된 이미지 URL
   bool _isImageChanged = false; // 이미지가 변경되었는지 추적
+  bool _isLoading = false; // 로딩 상태를 위한 변수 추가
 
   @override
   void initState() {
@@ -62,6 +63,10 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
+    setState(() {
+      _isLoading = true; // 로딩 시작
+    });
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('로그인된 사용자가 없습니다.');
@@ -93,6 +98,10 @@ class _ProfilePageState extends State<ProfilePage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('저장 중 오류 발생: $e')));
+    } finally {
+      setState(() {
+        _isLoading = false; // 로딩 종료
+      });
     }
   }
 
@@ -202,6 +211,8 @@ class _ProfilePageState extends State<ProfilePage> {
             key: _formKey,
             child: Column(
               children: [
+                _emailField(widgetWidth),
+                const SizedBox(height: _spacing),
                 _buildNameField(widgetWidth),
                 const SizedBox(height: _spacing),
                 _buildStatusField(widgetWidth),
@@ -288,6 +299,22 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _emailField(double width) {
+    return SizedBox(
+      width: width,
+      child: TextFormField(
+        decoration: _textFieldDecoration(
+          '이메일',
+          prefixIcon: const Icon(Icons.email_outlined, color: _primaryColor),
+        ),
+        // 수정불가
+        enabled: false,
+        // 파이어베이스에서 사용자의 이메일을 불러와서 표시함
+        initialValue: FirebaseAuth.instance.currentUser?.email,
+      ),
+    );
+  }
+
   // 이름 입력 필드
   Widget _buildNameField(double width) {
     return SizedBox(
@@ -324,7 +351,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return SizedBox(
       width: width,
       child: ElevatedButton(
-        onPressed: _saveProfile,
+        onPressed: _isLoading ? null : _saveProfile, // 로딩 중일 때 버튼 비활성화
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
@@ -333,7 +360,17 @@ class _ProfilePageState extends State<ProfilePage> {
           backgroundColor: _primaryColor,
           foregroundColor: Colors.white,
         ),
-        child: const Text('저장', style: TextStyle(fontSize: 16)),
+        child:
+            _isLoading // 로딩 중일 때 CircularProgressIndicator 표시
+                ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+                : const Text('저장', style: TextStyle(fontSize: 16)),
       ),
     );
   }
