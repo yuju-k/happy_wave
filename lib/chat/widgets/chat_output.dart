@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/gestures.dart';
+import 'chat_message_bubble.dart';
 import '../services/message_service.dart';
+import 'chat_config.dart';
 
+/// Displays a chat interface with message history and real-time updates.
 class ChatOutput extends StatefulWidget {
   final String chatRoomId;
   final String myName;
@@ -35,20 +35,20 @@ class _ChatOutputState extends State<ChatOutput> {
   bool _hasMoreMessages = true;
   bool _isInitialLoad = true;
 
-  // URL 감지를 위한 정규 표현식
-  static final RegExp _urlRegExp = RegExp(
-    r'(?:(?:https?|ftp):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[A-Z0-9+&@#\/%=~_|$])',
-    caseSensitive: false,
-  );
-
   @override
   void initState() {
     super.initState();
     _loadInitialMessages();
-    _scrollController.addListener(_onScroll);
+    _scrollController.addListener(_handleScroll);
   }
 
-  /// 초기 메시지 로드
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Loads initial messages for the chat room.
   Future<void> _loadInitialMessages() async {
     try {
       final initialMessages = await _messageService.loadInitialMessages(
@@ -60,36 +60,26 @@ class _ChatOutputState extends State<ChatOutput> {
       setState(() {
         _messages.addAll(initialMessages);
         _isInitialLoad = false;
-        // 각 메시지의 원본 컨테이너 상태 초기화
-        for (final message in initialMessages) {
-          _showOriginalMap[message.id] = false;
-        }
+        _initializeOriginalMap(initialMessages);
       });
 
-      // 초기 로드 후 맨 아래로 스크롤
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToEnd();
+      // Delay scroll to ensure ListView is fully built
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) _scrollToEnd();
       });
 
-      // 초기 로드 완료 후 새 메시지 구독 시작
       _subscribeToNewMessages();
     } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('메시지 로드 오류: $error')));
-      }
+      _showErrorSnackBar('Failed to load messages: $error');
     }
   }
 
-  /// 새 메시지 실시간 구독
+  /// Subscribes to real-time new message updates.
   void _subscribeToNewMessages() {
-    // 현재 가장 최신 메시지의 시간을 기준으로 스트리밍 시작
-    DateTime? afterTime;
-    if (_messages.isNotEmpty) {
-      final latestMessage = _messages.last;
-      afterTime = DateTime.fromMillisecondsSinceEpoch(latestMessage.createdAt!);
-    }
+    final afterTime =
+        _messages.isNotEmpty
+            ? DateTime.fromMillisecondsSinceEpoch(_messages.last.createdAt!)
+            : null;
 
     _messageService
         .streamNewMessages(widget.chatRoomId, afterTime: afterTime)
@@ -100,28 +90,19 @@ class _ChatOutputState extends State<ChatOutput> {
             setState(() {
               _messages.add(newMessage);
               _showOriginalMap[newMessage.id] = false;
-
-              // 메모리 관리: 너무 많은 메시지가 쌓이면 오래된 것 제거
               _messageService.clearOldMessagesFromMemory(_messages);
             });
 
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _scrollToEnd();
-            });
+            WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToEnd());
           },
-          onError: (error) {
-            if (mounted) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('메시지 스트림 오류: $error')));
-            }
-          },
+          onError:
+              (error) => _showErrorSnackBar('Message stream error: $error'),
         );
   }
 
-  /// 스크롤 이벤트 처리 (상단 도달 시 이전 메시지 로드)
-  void _onScroll() {
-    if (_scrollController.position.pixels <= 100 && // 상단 근처
+  /// Handles scroll events to load older messages when reaching the top.
+  void _handleScroll() {
+    if (_scrollController.position.pixels <= ChatConfig.scrollThreshold &&
         !_isLoadingOlder &&
         _hasMoreMessages &&
         !_isInitialLoad) {
@@ -129,18 +110,15 @@ class _ChatOutputState extends State<ChatOutput> {
     }
   }
 
-  /// 이전 메시지 로드 (페이지네이션)
+  /// Loads older messages for pagination.
   Future<void> _loadOlderMessages() async {
     if (_messages.isEmpty) return;
 
-    setState(() {
-      _isLoadingOlder = true;
-    });
+    setState(() => _isLoadingOlder = true);
 
     try {
-      final oldestMessage = _messages.first;
       final beforeTime = DateTime.fromMillisecondsSinceEpoch(
-        oldestMessage.createdAt!,
+        _messages.first.createdAt!,
       );
 
       final olderMessages = await _messageService.loadOlderMessages(
@@ -155,104 +133,61 @@ class _ChatOutputState extends State<ChatOutput> {
           _hasMoreMessages = false;
         } else {
           _messages.insertAll(0, olderMessages);
-          // 새로 로드된 메시지들의 원본 컨테이너 상태 초기화
-          for (final message in olderMessages) {
-            _showOriginalMap[message.id] = false;
-          }
+          _initializeOriginalMap(olderMessages);
         }
         _isLoadingOlder = false;
       });
     } catch (error) {
       if (mounted) {
-        setState(() {
-          _isLoadingOlder = false;
-        });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('이전 메시지 로드 오류: $error')));
+        setState(() => _isLoadingOlder = false);
+        _showErrorSnackBar('Failed to load older messages: $error');
       }
     }
   }
 
-  /// 스크롤을 리스트의 끝으로 부드럽게 이동합니다.
-  void _scrollToEnd() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+  /// Initializes the original message visibility map for new messages.
+  void _initializeOriginalMap(List<types.Message> messages) {
+    for (final message in messages) {
+      _showOriginalMap[message.id] = false;
     }
   }
 
-  /// 원본 컨테이너 표시 상태를 토글합니다.
-  void _toggleOriginalContainer(String messageId) {
-    setState(() {
-      _showOriginalMap[messageId] = !(_showOriginalMap[messageId] ?? false);
+  /// Scrolls to the end of the message list smoothly.
+  void _scrollToEnd() {
+    if (!_scrollController.hasClients || !mounted) return;
+
+    // Attempt to scroll to the bottom
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: ChatConfig.scrollDuration,
+      curve: Curves.easeOut,
+    );
+
+    // Verify and retry if not at bottom after a short delay
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (!mounted || !_scrollController.hasClients) return;
+
+      final currentPosition = _scrollController.position.pixels;
+      final maxExtent = _scrollController.position.maxScrollExtent;
+
+      // If not at the bottom, retry scrolling
+      if (currentPosition < maxExtent - 10) {
+        _scrollController.animateTo(
+          maxExtent,
+          duration: ChatConfig.scrollDuration,
+          curve: Curves.easeOut,
+        );
+      }
     });
   }
 
-  /// URL을 안전하게 실행합니다.
-  Future<void> _launchURL(String url) async {
-    Uri uri = Uri.parse(url);
-    if (!uri.hasScheme) {
-      uri = Uri.parse('http://$url'); // 스키마가 없으면 http://를 붙여줍니다.
+  /// Displays an error snackbar with the given message.
+  void _showErrorSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('링크를 열 수 없습니다: $url')));
-      }
-    }
-  }
-
-  /// 텍스트 내 URL을 감지하고 클릭 가능하게 만듭니다.
-  TextSpan _buildClickableText(String text) {
-    final List<TextSpan> spans = [];
-    text.splitMapJoin(
-      _urlRegExp,
-      onMatch: (Match match) {
-        final url = match.group(0);
-        if (url != null) {
-          spans.add(
-            TextSpan(
-              text: url,
-              style: const TextStyle(
-                color: Colors.blue, // 링크 색상
-                decoration: TextDecoration.underline, // 밑줄
-              ),
-              recognizer:
-                  TapGestureRecognizer()
-                    ..onTap = () {
-                      _launchURL(url);
-                    },
-            ),
-          );
-        }
-        return '';
-      },
-      onNonMatch: (String nonMatch) {
-        spans.add(
-          TextSpan(
-            text: nonMatch,
-            style: const TextStyle(
-              color: Colors.black, // 텍스트 색상
-            ),
-          ),
-        );
-        return '';
-      },
-    );
-    return TextSpan(children: spans);
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
   }
 
   @override
@@ -263,14 +198,11 @@ class _ChatOutputState extends State<ChatOutput> {
 
     return Column(
       children: [
-        // 상단 로딩 인디케이터
         if (_isLoadingOlder)
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: const CircularProgressIndicator(),
+          const Padding(
+            padding: EdgeInsets.all(ChatConfig.padding),
+            child: CircularProgressIndicator(),
           ),
-
-        // 메시지 리스트
         Expanded(
           child: ListView.builder(
             controller: _scrollController,
@@ -279,147 +211,20 @@ class _ChatOutputState extends State<ChatOutput> {
               final message = _messages[index];
               if (message is! types.TextMessage) return const SizedBox.shrink();
 
-              final isMyMessage = message.author.id == widget.myUserId;
-              final createdTime = DateTime.fromMillisecondsSinceEpoch(
-                message.createdAt!,
-              );
-              final formattedTime = DateFormat('HH:mm').format(createdTime);
-
-              return _buildMessageBubble(
-                context,
+              return ChatMessageBubble(
                 message: message,
-                isMyMessage: isMyMessage,
-                formattedTime: formattedTime,
+                isMyMessage: message.author.id == widget.myUserId,
+                showOriginal: _showOriginalMap[message.id] ?? false,
+                onToggleOriginal:
+                    () => setState(() {
+                      _showOriginalMap[message.id] =
+                          !(_showOriginalMap[message.id] ?? false);
+                    }),
               );
             },
           ),
         ),
       ],
-    );
-  }
-
-  /// 메시지 버블 UI를 생성합니다.
-  Widget _buildMessageBubble(
-    BuildContext context, {
-    required types.TextMessage message,
-    required bool isMyMessage,
-    required String formattedTime,
-  }) {
-    final showOriginal = _showOriginalMap[message.id] ?? false;
-    final isConverted = message.metadata?['converted'] as bool? ?? false;
-    final textOriginalMessage =
-        message.metadata?['originalMessage'] as String? ?? '';
-
-    return Align(
-      alignment: isMyMessage ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.6,
-        ),
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color:
-              isMyMessage
-                  ? const Color.fromARGB(255, 212, 250, 253)
-                  : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: IntrinsicWidth(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 메시지 텍스트와 시간/아이콘을 함께 배치
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // 메시지 텍스트
-                  // 메시지 텍스트 (URL 감지 기능 적용)
-                  Expanded(
-                    child: RichText(
-                      // RichText 위젯 사용
-                      text: _buildClickableText(message.text),
-                      softWrap: true,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // 시간과 아이콘
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            formattedTime,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          if (isConverted) ...[
-                            const SizedBox(width: 4),
-                            GestureDetector(
-                              onTap: () => _toggleOriginalContainer(message.id),
-                              child: Icon(
-                                Icons.auto_fix_high,
-                                size: 18,
-                                color:
-                                    showOriginal
-                                        ? Colors.grey
-                                        : const Color(0xFF389EA9),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-
-              // 원본 컨테이너를 조건부로 표시
-              if (showOriginal) ...[
-                const SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      left: BorderSide(color: Color(0xFF389EA9), width: 3.0),
-                    ),
-                    color: Color(0xFFF5F5F5),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '원본 메시지',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF389EA9),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        textOriginalMessage,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
-                        ),
-                        softWrap: true,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
