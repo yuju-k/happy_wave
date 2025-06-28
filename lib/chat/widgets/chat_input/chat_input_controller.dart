@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/message_send.dart';
 import 'sentiment_analyzer.dart';
+import '../../../system_log.dart';
 
 class ChatInputController {
   // ===========================================
@@ -17,6 +18,7 @@ class ChatInputController {
   // ===========================================
   final TextEditingController textController = TextEditingController();
   late final SentimentAnalyzer _sentimentAnalyzer;
+  final SystemLogService _systemLogService = SystemLogService();
 
   String originalMessage = '';
   String sentimentResult = '';
@@ -126,6 +128,9 @@ class ChatInputController {
     sentimentResult = sentiment;
     suggestionResult = suggestion;
 
+    // 감정 분석 결과를 Firebase에 기록합니다. (uid를 함께 전달)
+    _systemLogService.logSentiment(myUserId, sentimentResult);
+
     if (_isNegativeWithSuggestion()) {
       _showSuggestionsPanel();
     } else {
@@ -229,7 +234,7 @@ class ChatInputController {
   // UI 헬퍼 메서드들
   // ===========================================
   String getHintText() {
-    return showSuggestions ? '원본 또는 제안을 선택하세요' : '메시지를 입력하세요';
+    return showSuggestions ? '원본 또는 제안을 선택하세요' : '메시지 입력';
   }
 
   void handleTextSubmission() {
