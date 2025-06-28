@@ -76,6 +76,9 @@ class ChatMessageBubble extends StatelessWidget {
     final originalMessage =
         message.metadata?['originalMessage'] as String? ?? '';
 
+    final isOriginalViewTrue = true;
+    final isOriginalMessageToggleTrue = true;
+
     return Align(
       alignment: isMyMessage ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -123,11 +126,22 @@ class ChatMessageBubble extends StatelessWidget {
                               color: Colors.grey,
                             ),
                           ),
-                          if (isConverted) ...[
+                          if (isConverted && isOriginalViewTrue) ...[
                             const SizedBox(width: ChatConfig.iconSpacing),
-                            GestureDetector(
-                              onTap: onToggleOriginal,
-                              child: Icon(
+                            if (isOriginalMessageToggleTrue) ...[
+                              GestureDetector(
+                                onTap: onToggleOriginal,
+                                child: Icon(
+                                  Icons.auto_fix_high,
+                                  size: ChatConfig.iconSize,
+                                  color:
+                                      showOriginal
+                                          ? Colors.grey
+                                          : ChatConfig.iconColor,
+                                ),
+                              ),
+                            ] else ...[
+                              Icon(
                                 Icons.auto_fix_high,
                                 size: ChatConfig.iconSize,
                                 color:
@@ -135,7 +149,7 @@ class ChatMessageBubble extends StatelessWidget {
                                         ? Colors.grey
                                         : ChatConfig.iconColor,
                               ),
-                            ),
+                            ],
                           ],
                         ],
                       ),
@@ -143,7 +157,7 @@ class ChatMessageBubble extends StatelessWidget {
                   ),
                 ],
               ),
-              if (showOriginal) ...[
+              if (showOriginal && isOriginalViewTrue) ...[
                 const SizedBox(height: ChatConfig.spacing),
                 _buildOriginalMessageContainer(originalMessage),
               ],
