@@ -141,25 +141,27 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            flex: 3,
-            child: ChatOutput(
-              key: _chatOutputKey,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              flex: 3,
+              child: ChatOutput(
+                key: _chatOutputKey,
+                chatRoomId: _chatRoomId!,
+                myUserId: _auth.currentUser!.uid,
+                myName: _myName!,
+                otherUserId: _otherUserId,
+                otherUserName: _otherUserName,
+              ),
+            ),
+            ChatInput(
               chatRoomId: _chatRoomId!,
               myUserId: _auth.currentUser!.uid,
               myName: _myName!,
-              otherUserId: _otherUserId,
-              otherUserName: _otherUserName,
             ),
-          ),
-          ChatInput(
-            chatRoomId: _chatRoomId!,
-            myUserId: _auth.currentUser!.uid,
-            myName: _myName!,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
