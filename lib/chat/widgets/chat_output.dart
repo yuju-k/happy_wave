@@ -22,10 +22,10 @@ class ChatOutput extends StatefulWidget {
   });
 
   @override
-  State<ChatOutput> createState() => _ChatOutputState();
+  ChatOutputState createState() => ChatOutputState();
 }
 
-class _ChatOutputState extends State<ChatOutput> {
+class ChatOutputState extends State<ChatOutput> {
   final MessageService _messageService = MessageService();
   final ScrollController _scrollController = ScrollController();
   final List<types.Message> _messages = [];
@@ -65,7 +65,7 @@ class _ChatOutputState extends State<ChatOutput> {
 
       // Delay scroll to ensure ListView is fully built
       Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted) _scrollToEnd();
+        if (mounted) scrollToEnd();
       });
 
       _subscribeToNewMessages();
@@ -93,7 +93,7 @@ class _ChatOutputState extends State<ChatOutput> {
               _messageService.clearOldMessagesFromMemory(_messages);
             });
 
-            WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToEnd());
+            WidgetsBinding.instance.addPostFrameCallback((_) => scrollToEnd());
           },
           onError:
               (error) => _showErrorSnackBar('Message stream error: $error'),
@@ -153,7 +153,7 @@ class _ChatOutputState extends State<ChatOutput> {
   }
 
   /// Scrolls to the end of the message list smoothly.
-  void _scrollToEnd() {
+  void scrollToEnd() {
     if (!_scrollController.hasClients || !mounted) return;
 
     // Attempt to scroll to the bottom

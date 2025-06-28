@@ -11,7 +11,7 @@ class ChatPage extends StatefulWidget {
   State<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   String? _chatRoomId;
   String? _myName;
   String? _otherUserName;
@@ -20,11 +20,38 @@ class _ChatPageState extends State<ChatPage> {
   bool _isLoading = true;
   final _auth = FirebaseAuth.instance;
   final _userService = UserService();
+  final GlobalKey<ChatOutputState> _chatOutputKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeChat();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    final bottomInset =
+        WidgetsBinding
+            .instance
+            .platformDispatcher
+            .views
+            .first
+            .viewInsets
+            .bottom;
+    if (bottomInset > 0) {
+      Future.delayed(const Duration(milliseconds: 50), () {
+        // Scroll to the end of the chat when the keyboard appears.
+        _chatOutputKey.currentState?.scrollToEnd();
+      });
+    }
   }
 
   /// 채팅방 정보와 사용자 데이터를 초기화합니다.
@@ -88,6 +115,7 @@ class _ChatPageState extends State<ChatPage> {
     }
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text(_otherUserName ?? ''),
         centerTitle: true,
@@ -118,6 +146,7 @@ class _ChatPageState extends State<ChatPage> {
           Expanded(
             flex: 3,
             child: ChatOutput(
+              key: _chatOutputKey,
               chatRoomId: _chatRoomId!,
               myUserId: _auth.currentUser!.uid,
               myName: _myName!,
