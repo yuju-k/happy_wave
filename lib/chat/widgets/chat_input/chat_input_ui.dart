@@ -31,7 +31,7 @@ class ChatInputUI {
           enabled: !controller.isLoading,
           decoration: InputDecoration(
             hintText: controller.getHintText(),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
             suffixIcon: _buildSendButton(context),
           ),
           onSubmitted: (_) => controller.handleTextSubmission(),

@@ -234,7 +234,7 @@ class ChatInputController {
   // UI 헬퍼 메서드들
   // ===========================================
   String getHintText() {
-    return showSuggestions ? '원본 또는 제안을 선택하세요' : '메시지를 입력하세요';
+    return showSuggestions ? '원본 또는 제안을 선택하세요' : '메시지 입력';
   }
 
   void handleTextSubmission() {

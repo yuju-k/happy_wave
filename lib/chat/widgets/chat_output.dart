@@ -63,9 +63,10 @@ class ChatOutputState extends State<ChatOutput> {
         _initializeOriginalMap(initialMessages);
       });
 
-      // Delay scroll to ensure ListView is fully built
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted) scrollToEnd();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _scrollController.hasClients) {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        }
       });
 
       _subscribeToNewMessages();
