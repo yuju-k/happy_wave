@@ -42,6 +42,60 @@ class SettingsPage extends StatelessWidget {
         });
   }
 
+  // 비밀번호 입력 다이얼로그를 표시하는 함수 추가
+  Future<void> _showPasswordInputDialog(BuildContext context) async {
+    final TextEditingController passwordController = TextEditingController();
+    bool isPasswordCorrect = false;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false, // 다이얼로그 바깥을 탭해도 닫히지 않도록 설정
+      builder: (dialogContext) {
+        // 새로운 BuildContext 사용
+        return AlertDialog(
+          title: const Text('비밀번호 입력'),
+          content: TextField(
+            controller: passwordController,
+            obscureText: true,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(hintText: '비밀번호를 입력하세요'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext); // dialogContext 사용하여 팝
+              },
+              child: const Text('취소'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (passwordController.text == '601216') {
+                  // 비밀번호 확인
+                  isPasswordCorrect = true;
+                  Navigator.pop(dialogContext); // dialogContext 사용하여 팝
+                } else {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    // dialogContext 사용하여 스낵바 표시
+                    const SnackBar(content: Text('비밀번호가 틀렸습니다.')),
+                  );
+                }
+              },
+              child: const Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // 비밀번호가 맞다면 DisplaySettingPage로 이동
+    if (isPasswordCorrect && context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const DisplaySettingPage()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -66,12 +120,6 @@ class SettingsPage extends StatelessWidget {
           final hasPendingInvites =
               userData['pendingInvites'] != null &&
               (userData['pendingInvites'] as List).isNotEmpty;
-          final chatOriginalViewEnabled =
-              userData['chatOriginalViewEnabled'] as bool? ??
-              true; // Default to true
-          final chatOriginalToggleEnabled =
-              userData['chatOriginalToggleEnabled'] as bool? ??
-              true; // Default to true
 
           return Padding(
             padding: const EdgeInsets.all(24.0),
@@ -89,13 +137,7 @@ class SettingsPage extends StatelessWidget {
                 ElevatedButton.icon(
                   icon: const Icon(Icons.no_encryption),
                   label: const Text('채팅 표시 설정'),
-                  onPressed:
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const DisplaySettingPage(),
-                        ),
-                      ),
+                  onPressed: () => _showPasswordInputDialog(context),
                 ),
                 const SizedBox(height: 16),
 
