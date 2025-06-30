@@ -157,17 +157,8 @@ class _HomePageState extends State<HomePage> {
         final data = snapshot.data!.data() as Map<String, dynamic>?;
         final connected = data?['connect_status'] == true;
 
-        // 상태 업데이트
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && _isConnected != connected) {
-            setState(() {
-              _isConnected = connected;
-            });
-          }
-        });
-
         // 연결 상태에 따라 다른 화면 표시
-        if (!_isConnected) {
+        if (!connected) {
           // 연결되지 않은 상태: 초대 화면 표시
           return const InviteUserPage();
         } else {
