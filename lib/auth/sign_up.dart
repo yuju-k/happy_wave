@@ -46,7 +46,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   Widget _buildSignUpButton() {
     return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 350.0),
+      constraints: const BoxConstraints(minWidth: 260.0),
       child: ElevatedButton(
         onPressed: _handleSignUp,
         child: const Text('회원가입', style: TextStyle(fontSize: 16)),
@@ -93,7 +93,7 @@ class _SignUpPageState extends State<SignUpPage> {
     return Align(
       alignment: Alignment.topCenter,
       child: Padding(
-        padding: const EdgeInsets.only(top: 50.0),
+        padding: const EdgeInsets.only(top: 0.0),
         child: Image.asset(
           'assets/Happywave_logo.png',
           width: 250,
@@ -131,10 +131,10 @@ class _SignUpPageState extends State<SignUpPage> {
             children: [
               _buildLogo(),
               Padding(
-                padding: const EdgeInsets.only(top: 260.0),
+                padding: const EdgeInsets.only(top: 210.0),
                 child: Center(
                   child: Container(
-                    width: 350.0,
+                    width: 320.0,
                     padding: const EdgeInsets.all(24.0),
                     decoration: _formContainerDecoration(),
                     child: Column(
