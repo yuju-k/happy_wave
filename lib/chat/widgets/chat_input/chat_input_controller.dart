@@ -103,9 +103,6 @@ class ChatInputController {
         converted: convertedResult,
       );
 
-      // 메시지 변환 여부를 시스템 로그에 기록
-      _systemLogService.logMessageConversionStatus(myUserId, convertedResult);
-
       // 제안창이 나타나고 선택 후 전송된 경우에만 기록
       if (isFromSuggestionPanel) {
         _systemLogService.logMessageSelectedAndSent(myUserId, convertedResult);

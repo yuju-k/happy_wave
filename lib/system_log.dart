@@ -98,38 +98,6 @@ class SystemLogService {
     }
   }
 
-  Future<void> logMessageConversionStatus(String uid, bool converted) async {
-    try {
-      final docRef = _firestore.collection('system_log').doc(uid);
-
-      await _firestore.runTransaction((transaction) async {
-        final docSnapshot = await transaction.get(docRef);
-
-        int convertedCount = 0;
-
-        if (docSnapshot.exists) {
-          final data = docSnapshot.data();
-          if (data != null) {
-            convertedCount = data['convertedMessageCount'] as int? ?? 0;
-          }
-        }
-
-        if (converted) {
-          convertedCount++;
-        }
-
-        transaction.set(docRef, {
-          'convertedMessageCount': convertedCount,
-        }, SetOptions(merge: true));
-      });
-      debugPrint(
-        'User $uid message conversion status logged: Converted: $converted',
-      );
-    } catch (e) {
-      debugPrint('Error logging message conversion status for user $uid: $e');
-    }
-  }
-
   /// 지정된 사용자가 원본 또는 변환된 메시지를 선택하고 전송한 횟수를 기록합니다.
   /// 'converted'가 true이면 selectedAndSentConvertedCount를, false이면 selectedAndSentOriginalCount를 증가시킵니다.
   Future<void> logMessageSelectedAndSent(String uid, bool converted) async {
