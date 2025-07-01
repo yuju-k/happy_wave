@@ -98,6 +98,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
 
   /// 오류 메시지를 SnackBar로 표시합니다.
   void _showErrorSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));

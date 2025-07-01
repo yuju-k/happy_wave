@@ -16,8 +16,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool _isConnected = false;
-
   @override
   void initState() {
     super.initState();

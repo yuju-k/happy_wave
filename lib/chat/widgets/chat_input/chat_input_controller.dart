@@ -1,3 +1,4 @@
+// lib/chat/widgets/chat_input/chat_input_controller.dart
 import 'package:flutter/material.dart';
 import '../../services/message_send.dart';
 import 'sentiment_analyzer.dart';
@@ -85,7 +86,11 @@ class ChatInputController {
     }
   }
 
-  Future<void> sendMessage(String message) async {
+  Future<void> sendMessage(
+    String message, {
+    bool isFromSuggestionPanel = false,
+  }) async {
+    // isFromSuggestionPanel 매개변수 추가
     try {
       await sendMessageToRoom(
         roomId: chatRoomId,
@@ -97,6 +102,14 @@ class ChatInputController {
         suggestionResult: suggestionResult,
         converted: convertedResult,
       );
+
+      // 메시지 변환 여부를 시스템 로그에 기록
+      _systemLogService.logMessageConversionStatus(myUserId, convertedResult);
+
+      // 제안창이 나타나고 선택 후 전송된 경우에만 기록
+      if (isFromSuggestionPanel) {
+        _systemLogService.logMessageSelectedAndSent(myUserId, convertedResult);
+      }
 
       _clearAfterSend();
       debugPrint('메시지 전송 완료');
@@ -113,7 +126,8 @@ class ChatInputController {
     _setLoadingState(true);
 
     try {
-      await sendMessage(text);
+      // 제안 패널에서 선택된 메시지임을 나타내는 플래그를 전달
+      await sendMessage(text, isFromSuggestionPanel: true);
     } catch (e) {
       _handleError('메시지 전송 중 오류: $e');
     } finally {
@@ -135,7 +149,7 @@ class ChatInputController {
       _showSuggestionsPanel();
     } else {
       // 긍정적이거나 중립적인 경우 바로 전송
-      sendMessage(originalMessage)
+      sendMessage(originalMessage) // isFromSuggestionPanel 기본값 false
           .then((_) {
             _setLoadingState(false);
           })
@@ -157,7 +171,7 @@ class ChatInputController {
     suggestionResult = '';
 
     // 실패 시에도 메시지는 전송
-    sendMessage(originalMessage)
+    sendMessage(originalMessage) // isFromSuggestionPanel 기본값 false
         .then((_) {
           _setLoadingState(false);
         })
