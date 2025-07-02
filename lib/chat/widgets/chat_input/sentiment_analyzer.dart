@@ -141,7 +141,7 @@ class SentimentAnalyzer {
   Future<String> _generateSuggestion(String currentMessage) async {
     try {
       final suggestionPrompt = '''
-      마지막 메시지를 갈등을 완화할 수 있는 표현으로 변경해주세요.
+      마지막 메시지를 긍정적이거나 중립적 대화태도로 변경해주세요.
       마지막 메시지: "$currentMessage"
       응답 형식: 변경된 메시지
       마지막 메시지의 메시지 길이와 비슷한 길이의 메시지로 변경하세요.
