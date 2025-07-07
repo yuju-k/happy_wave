@@ -11,7 +11,7 @@ class ChatPage extends StatefulWidget {
   State<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   String? _chatRoomId;
   String? _myName;
   String? _otherUserName;
@@ -20,11 +20,38 @@ class _ChatPageState extends State<ChatPage> {
   bool _isLoading = true;
   final _auth = FirebaseAuth.instance;
   final _userService = UserService();
+  final GlobalKey<ChatOutputState> _chatOutputKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeChat();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    final bottomInset =
+        WidgetsBinding
+            .instance
+            .platformDispatcher
+            .views
+            .first
+            .viewInsets
+            .bottom;
+    if (bottomInset > 0) {
+      Future.delayed(const Duration(milliseconds: 50), () {
+        // Scroll to the end of the chat when the keyboard appears.
+        _chatOutputKey.currentState?.scrollToEnd();
+      });
+    }
   }
 
   /// 채팅방 정보와 사용자 데이터를 초기화합니다.
@@ -71,9 +98,15 @@ class _ChatPageState extends State<ChatPage> {
 
   /// 오류 메시지를 SnackBar로 표시합니다.
   void _showErrorSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  /// 설정 페이지로 이동합니다.
+  void _navigateToSettings() {
+    Navigator.pushNamed(context, '/settings');
   }
 
   @override
@@ -83,44 +116,53 @@ class _ChatPageState extends State<ChatPage> {
     }
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text(_otherUserName ?? ''),
         centerTitle: true,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child:
+              _otherProfileImage != null
+                  ? CircleAvatar(
+                    radius: 22,
+                    backgroundImage: NetworkImage(_otherProfileImage!),
+                  )
+                  : const CircleAvatar(
+                    radius: 22,
+                    backgroundColor: Colors.white60,
+                    child: Icon(Icons.person, size: 22),
+                  ),
+        ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child:
-                _otherProfileImage != null
-                    ? CircleAvatar(
-                      radius: 22,
-                      backgroundImage: NetworkImage(_otherProfileImage!),
-                    )
-                    : const CircleAvatar(
-                      radius: 22,
-                      backgroundColor: Colors.white60,
-                      child: Icon(Icons.person, size: 22),
-                    ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: _navigateToSettings,
+            tooltip: '설정',
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            flex: 3,
-            child: ChatOutput(
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              flex: 3,
+              child: ChatOutput(
+                key: _chatOutputKey,
+                chatRoomId: _chatRoomId!,
+                myUserId: _auth.currentUser!.uid,
+                myName: _myName!,
+                otherUserId: _otherUserId,
+                otherUserName: _otherUserName,
+              ),
+            ),
+            ChatInput(
               chatRoomId: _chatRoomId!,
               myUserId: _auth.currentUser!.uid,
               myName: _myName!,
-              otherUserId: _otherUserId,
-              otherUserName: _otherUserName,
             ),
-          ),
-          ChatInput(
-            chatRoomId: _chatRoomId!,
-            myUserId: _auth.currentUser!.uid,
-            myName: _myName!,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

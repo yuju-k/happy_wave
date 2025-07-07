@@ -25,13 +25,13 @@ class ChatInputUI {
     return Container(
       decoration: const BoxDecoration(color: Color(0xFFD8F3F1)),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
         child: TextField(
           controller: controller.textController,
           enabled: !controller.isLoading,
           decoration: InputDecoration(
             hintText: controller.getHintText(),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
             suffixIcon: _buildSendButton(context),
           ),
           onSubmitted: (_) => controller.handleTextSubmission(),
@@ -173,7 +173,7 @@ class ChatInputUI {
   Widget _buildButtonMessage(String message) {
     return Text(
       message,
-      style: const TextStyle(color: Colors.black87, fontSize: 13),
+      style: const TextStyle(color: Colors.black87, fontSize: 14),
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
     );

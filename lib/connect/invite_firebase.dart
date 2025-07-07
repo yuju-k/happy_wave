@@ -1,7 +1,6 @@
-// lib/connect/invite_firebase.dart 업데이트된 버전
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/widgets.dart';
 
 class InviteService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -54,7 +53,35 @@ class InviteService {
       }
       return null;
     } catch (e) {
-      print('Error getting pending invite: $e');
+      debugPrint('Error getting pending invite: $e');
+      return null;
+    }
+  }
+
+  /// 기존 연결 관계가 있는지 확인 (연결 해제된 상태 포함)
+  Future<String?> getExistingHomeId(String uid1, String uid2) async {
+    try {
+      // 두 가지 가능한 homeId 패턴 확인
+      final homeId1 = '${uid1}_$uid2';
+      final homeId2 = '${uid2}_$uid1';
+
+      // 첫 번째 패턴 확인
+      final doc1 =
+          await _firestore.collection('shared_homes').doc(homeId1).get();
+      if (doc1.exists) {
+        return homeId1;
+      }
+
+      // 두 번째 패턴 확인
+      final doc2 =
+          await _firestore.collection('shared_homes').doc(homeId2).get();
+      if (doc2.exists) {
+        return homeId2;
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint('Error checking existing home: $e');
       return null;
     }
   }
@@ -138,7 +165,7 @@ class InviteService {
     }
   }
 
-  /// 초대 수락
+  /// 초대 수락 (기존 관계 확인 후 재연결 또는 신규 생성)
   Future<String?> acceptInvite(String fromUid) async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return '로그인이 필요합니다.';
@@ -148,43 +175,84 @@ class InviteService {
 
     try {
       final inviteRef = _firestore.collection('invites').doc(inviteId);
-      final homeId = '${fromUid}_$toUid'; // 홈 ID를 고정된 규칙으로 설정
+
+      // 기존 연결 관계 확인
+      final existingHomeId = await getExistingHomeId(fromUid, toUid);
+      final homeId = existingHomeId ?? '${fromUid}_$toUid'; // 기존이 없으면 새로 생성
 
       // 1. 초대 상태 변경
       await inviteRef.update({'status': 'accepted'});
 
-      // 2. shared_home 생성
-      await _firestore.collection('shared_homes').doc(homeId).set({
-        'users': [fromUid, toUid],
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      if (existingHomeId != null) {
+        // 재연결의 경우: 기존 문서들의 상태만 업데이트
+        await _firestore.runTransaction((transaction) async {
+          // shared_home 상태 복원
+          final sharedHomeRef = _firestore
+              .collection('shared_homes')
+              .doc(homeId);
+          transaction.update(sharedHomeRef, {
+            'status': 'connected',
+            'reconnectedAt': FieldValue.serverTimestamp(),
+          });
 
-      // 3. 양쪽 사용자 문서 업데이트
-      final fromRef = _firestore.collection('users').doc(fromUid);
-      final toRef = _firestore.collection('users').doc(toUid);
+          // 채팅방 상태 복원
+          final chatroomRef = _firestore.collection('chatrooms').doc(homeId);
+          transaction.update(chatroomRef, {
+            'status': 'connected',
+            'reconnectedAt': FieldValue.serverTimestamp(),
+          });
 
-      await fromRef.set({
-        'homeId': homeId,
-        'connect_status': true,
-      }, SetOptions(merge: true));
+          // 양쪽 사용자 문서 업데이트
+          final fromRef = _firestore.collection('users').doc(fromUid);
+          final toRef = _firestore.collection('users').doc(toUid);
 
-      await toRef.set({
-        'homeId': homeId,
-        'connect_status': true,
-        'pendingInvites': FieldValue.arrayRemove([fromUid]),
-      }, SetOptions(merge: true));
+          transaction.update(fromRef, {'connect_status': true});
 
-      // 4. 채팅방 생성 (초대 수락 시 자동)
-      final chatroomRef = _firestore.collection('chatrooms').doc(homeId);
-      await chatroomRef.set({
-        'users': [fromUid, toUid],
-        'createdAt': FieldValue.serverTimestamp(),
-        'lastMessage': null, // 초기에는 메시지 없음
-      });
+          transaction.update(toRef, {
+            'connect_status': true,
+            'pendingInvites': FieldValue.arrayRemove([fromUid]),
+          });
+        });
+      } else {
+        // 신규 연결의 경우: 새로운 문서들 생성
+        await _firestore.runTransaction((transaction) async {
+          // shared_home 생성
+          final sharedHomeRef = _firestore
+              .collection('shared_homes')
+              .doc(homeId);
+          transaction.set(sharedHomeRef, {
+            'users': [fromUid, toUid],
+            'status': 'connected',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
 
-      // 5. 나와 상대방 문서에 채팅방 고유 ID 추가
-      await fromRef.set({'chatroomId': homeId}, SetOptions(merge: true));
-      await toRef.set({'chatroomId': homeId}, SetOptions(merge: true));
+          // 채팅방 생성
+          final chatroomRef = _firestore.collection('chatrooms').doc(homeId);
+          transaction.set(chatroomRef, {
+            'users': [fromUid, toUid],
+            'status': 'connected',
+            'createdAt': FieldValue.serverTimestamp(),
+            'lastMessage': null,
+          });
+
+          // 양쪽 사용자 문서 업데이트
+          final fromRef = _firestore.collection('users').doc(fromUid);
+          final toRef = _firestore.collection('users').doc(toUid);
+
+          transaction.update(fromRef, {
+            'homeId': homeId,
+            'chatroomId': homeId,
+            'connect_status': true,
+          });
+
+          transaction.update(toRef, {
+            'homeId': homeId,
+            'chatroomId': homeId,
+            'connect_status': true,
+            'pendingInvites': FieldValue.arrayRemove([fromUid]),
+          });
+        });
+      }
 
       return null;
     } catch (e) {

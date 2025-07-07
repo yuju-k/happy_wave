@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../system_log.dart';
 
 Future<void> sendMessageToRoom({
   required String roomId,
@@ -38,6 +39,10 @@ Future<void> sendMessageToRoom({
         'lastMessageAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     });
+
+    // 메시지 카운트 시스템로그
+    final SystemLogService systemLogService = SystemLogService();
+    systemLogService.logMessageSent(authorId);
   } catch (e) {
     //print('Error sending message to room $roomId: $e');
     rethrow;

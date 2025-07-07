@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,10 +7,18 @@ import 'home.dart';
 import 'auth/sign_up.dart';
 import 'auth/sign_in.dart';
 import 'profile/profile.dart';
+import 'settings/settings_page.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint("Handling a background message: ${message.messageId}");
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   runApp(const MainApp());
 }
 
@@ -26,6 +35,7 @@ class MainApp extends StatelessWidget {
         '/sign-in': (context) => const SignInPage(),
         '/sign-up': (context) => const SignUpPage(),
         '/profile': (context) => const ProfilePage(),
+        '/settings': (context) => const SettingsPage(),
       },
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFEDFFFE),

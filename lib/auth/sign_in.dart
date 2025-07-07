@@ -108,10 +108,10 @@ class _SignInPageState extends State<SignInPage> {
     return Align(
       alignment: Alignment.topCenter,
       child: Padding(
-        padding: const EdgeInsets.only(top: 15.0),
+        padding: const EdgeInsets.only(top: 0.0),
         child: Image.asset(
           'assets/Happywave_logo_2.png',
-          width: 360,
+          width: 300,
           fit: BoxFit.cover,
         ),
       ),
@@ -134,6 +134,8 @@ class _SignInPageState extends State<SignInPage> {
     );
   }
 
+  static const double containerWidth = 320.0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -147,7 +149,7 @@ class _SignInPageState extends State<SignInPage> {
             children: [
               _buildLogo(),
               Padding(
-                padding: const EdgeInsets.only(top: 260.0),
+                padding: const EdgeInsets.only(top: 200.0),
                 child: Center(
                   child: Container(
                     width: containerWidth,

@@ -22,8 +22,10 @@ class _ProfilePageState extends State<ProfilePage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _statusController;
-  File? _profileImage;
-  String? _storedImageUrl;
+  File? _profileImage; // 새로 선택한 이미지
+  String? _storedImageUrl; // 기존에 저장된 이미지 URL
+  bool _isImageChanged = false; // 이미지가 변경되었는지 추적
+  bool _isLoading = false; // 로딩 상태를 위한 변수 추가
 
   @override
   void initState() {
@@ -57,9 +59,13 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // 프로필 저장
+  // 프로필 저장 (이미지 업로드 포함)
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true; // 로딩 시작
+    });
 
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -69,7 +75,17 @@ class _ProfilePageState extends State<ProfilePage> {
       final status = _statusController.text.trim();
       final service = ProfileService();
 
+      // 이미지가 변경된 경우에만 업로드
+      String? imageUrl = _storedImageUrl;
+      if (_isImageChanged && _profileImage != null) {
+        imageUrl = await service.uploadProfileImage(user.uid, _profileImage!);
+      }
+
+      // 프로필 정보 업데이트 (이미지 URL 포함)
       await service.updateProfile(user.uid, name, status);
+      if (imageUrl != null) {
+        await service.updateProfileImage(user.uid, imageUrl);
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -82,11 +98,15 @@ class _ProfilePageState extends State<ProfilePage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('저장 중 오류 발생: $e')));
+    } finally {
+      setState(() {
+        _isLoading = false; // 로딩 종료
+      });
     }
   }
 
-  // 이미지 선택 및 업로드
-  Future<void> _pickAndUploadImage() async {
+  // 이미지 선택만 수행 (업로드는 저장 시)
+  Future<void> _pickImage() async {
     if (!await Permission.photos.request().isGranted) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -99,19 +119,11 @@ class _ProfilePageState extends State<ProfilePage> {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile == null || !mounted) return;
 
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
     final imageFile = File(pickedFile.path);
-    setState(() => _profileImage = imageFile);
-
-    final service = ProfileService();
-    final downloadUrl = await service.uploadProfileImage(user.uid, imageFile);
-    await service.updateProfileImage(user.uid, downloadUrl);
-
-    if (mounted) {
-      setState(() => _storedImageUrl = downloadUrl);
-    }
+    setState(() {
+      _profileImage = imageFile;
+      _isImageChanged = true;
+    });
   }
 
   @override
@@ -199,6 +211,8 @@ class _ProfilePageState extends State<ProfilePage> {
             key: _formKey,
             child: Column(
               children: [
+                _emailField(widgetWidth),
+                const SizedBox(height: _spacing),
                 _buildNameField(widgetWidth),
                 const SizedBox(height: _spacing),
                 _buildStatusField(widgetWidth),
@@ -225,7 +239,7 @@ class _ProfilePageState extends State<ProfilePage> {
               backgroundColor: const Color(0xFFE0F7FA),
               backgroundImage:
                   _profileImage != null
-                      ? FileImage(_profileImage!)
+                      ? FileImage(_profileImage!) // 새로 선택한 이미지 우선
                       : (_storedImageUrl != null
                           ? NetworkImage(_storedImageUrl!)
                           : null),
@@ -242,7 +256,7 @@ class _ProfilePageState extends State<ProfilePage> {
               bottom: 0,
               right: 0,
               child: GestureDetector(
-                onTap: _pickAndUploadImage,
+                onTap: _pickImage, // 이미지 선택만 수행
                 child: Container(
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
@@ -285,6 +299,22 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _emailField(double width) {
+    return SizedBox(
+      width: width,
+      child: TextFormField(
+        decoration: _textFieldDecoration(
+          '이메일',
+          prefixIcon: const Icon(Icons.email_outlined, color: _primaryColor),
+        ),
+        // 수정불가
+        enabled: false,
+        // 파이어베이스에서 사용자의 이메일을 불러와서 표시함
+        initialValue: FirebaseAuth.instance.currentUser?.email,
+      ),
+    );
+  }
+
   // 이름 입력 필드
   Widget _buildNameField(double width) {
     return SizedBox(
@@ -321,7 +351,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return SizedBox(
       width: width,
       child: ElevatedButton(
-        onPressed: _saveProfile,
+        onPressed: _isLoading ? null : _saveProfile, // 로딩 중일 때 버튼 비활성화
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
@@ -330,7 +360,17 @@ class _ProfilePageState extends State<ProfilePage> {
           backgroundColor: _primaryColor,
           foregroundColor: Colors.white,
         ),
-        child: const Text('저장', style: TextStyle(fontSize: 16)),
+        child:
+            _isLoading // 로딩 중일 때 CircularProgressIndicator 표시
+                ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+                : const Text('저장', style: TextStyle(fontSize: 16)),
       ),
     );
   }
