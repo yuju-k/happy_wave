@@ -2,12 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:happy_wave/auth/controller/providers.dart';
 import 'chat_message_bubble.dart';
 import '../services/message_service.dart';
 import 'chat_config.dart';
 
 /// Displays a chat interface with message history and real-time updates.
-class ChatOutput extends StatefulWidget {
+class ChatOutput extends ConsumerStatefulWidget {
   final String chatRoomId;
   final String myName;
   final String myUserId;
@@ -24,10 +26,10 @@ class ChatOutput extends StatefulWidget {
   });
 
   @override
-  ChatOutputState createState() => ChatOutputState();
+  ConsumerState<ChatOutput> createState() => _ChatOutputState();
 }
 
-class ChatOutputState extends State<ChatOutput> {
+class _ChatOutputState extends ConsumerState<ChatOutput> {
   final MessageService _messageService = MessageService();
   final ScrollController _scrollController = ScrollController();
   final List<types.Message> _messages = [];
@@ -37,15 +39,11 @@ class ChatOutputState extends State<ChatOutput> {
   bool _hasMoreMessages = true;
   bool _isInitialLoad = true;
 
-  bool _chatOriginalViewEnabled = false; // Default value
-  bool _chatOriginalToggleEnabled = false; // Default value
-
   @override
   void initState() {
     super.initState();
     _loadInitialMessages();
     _scrollController.addListener(_handleScroll);
-    _listenToUserSettings();
   }
 
   @override
@@ -54,40 +52,10 @@ class ChatOutputState extends State<ChatOutput> {
     super.dispose();
   }
 
-  /// Listens to real-time updates for user settings (e.g., original message display preference).
-  void _listenToUserSettings() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .snapshots()
-        .listen(
-          (doc) {
-            if (!mounted) return;
-            final data = doc.data();
-            if (data != null) {
-              setState(() {
-                _chatOriginalViewEnabled =
-                    data['chatOriginalViewEnabled'] as bool? ?? true;
-                _chatOriginalToggleEnabled =
-                    data['chatOriginalToggleEnabled'] as bool? ?? true;
-              });
-            }
-          },
-          onError: (error) {
-            debugPrint('Error listening to user settings: $error');
-          },
-        );
-  }
-
   /// Loads initial messages for the chat room.
   Future<void> _loadInitialMessages() async {
     try {
-      final initialMessages = await _messageService.loadInitialMessages(
-        roomId: widget.chatRoomId,
-      );
+      final initialMessages = await _messageService.loadInitialMessages(roomId: widget.chatRoomId);
 
       if (!mounted) return;
 
@@ -98,9 +66,11 @@ class ChatOutputState extends State<ChatOutput> {
       });
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _scrollController.hasClients) {
-          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-        }
+        Future.delayed(Duration(milliseconds: 500), () {
+          if (mounted && _scrollController.hasClients) {
+            _scrollController.jumpTo(_scrollController.position.maxScrollExtent + context.size!.height);
+          }
+        });
       });
 
       _subscribeToNewMessages();
@@ -111,28 +81,19 @@ class ChatOutputState extends State<ChatOutput> {
 
   /// Subscribes to real-time new message updates.
   void _subscribeToNewMessages() {
-    final afterTime =
-        _messages.isNotEmpty
-            ? DateTime.fromMillisecondsSinceEpoch(_messages.last.createdAt!)
-            : null;
+    final afterTime = _messages.isNotEmpty ? DateTime.fromMillisecondsSinceEpoch(_messages.last.createdAt!) : null;
 
-    _messageService
-        .streamNewMessages(widget.chatRoomId, afterTime: afterTime)
-        .listen(
-          (newMessage) {
-            if (!mounted) return;
+    _messageService.streamNewMessages(widget.chatRoomId, afterTime: afterTime).listen((newMessage) {
+      if (!mounted) return;
 
-            setState(() {
-              _messages.add(newMessage);
-              _showOriginalMap[newMessage.id] = false;
-              _messageService.clearOldMessagesFromMemory(_messages);
-            });
+      setState(() {
+        _messages.add(newMessage);
+        _showOriginalMap[newMessage.id] = false;
+        _messageService.clearOldMessagesFromMemory(_messages);
+      });
 
-            WidgetsBinding.instance.addPostFrameCallback((_) => scrollToEnd());
-          },
-          onError:
-              (error) => _showErrorSnackBar('Message stream error: $error'),
-        );
+      WidgetsBinding.instance.addPostFrameCallback((_) => scrollToEnd());
+    }, onError: (error) => _showErrorSnackBar('Message stream error: $error'));
   }
 
   /// Handles scroll events to load older messages when reaching the top.
@@ -152,14 +113,9 @@ class ChatOutputState extends State<ChatOutput> {
     setState(() => _isLoadingOlder = true);
 
     try {
-      final beforeTime = DateTime.fromMillisecondsSinceEpoch(
-        _messages.first.createdAt!,
-      );
+      final beforeTime = DateTime.fromMillisecondsSinceEpoch(_messages.first.createdAt!);
 
-      final olderMessages = await _messageService.loadOlderMessages(
-        roomId: widget.chatRoomId,
-        beforeTime: beforeTime,
-      );
+      final olderMessages = await _messageService.loadOlderMessages(roomId: widget.chatRoomId, beforeTime: beforeTime);
 
       if (!mounted) return;
 
@@ -207,11 +163,7 @@ class ChatOutputState extends State<ChatOutput> {
 
       // If not at the bottom, retry scrolling
       if (currentPosition < maxExtent - 10) {
-        _scrollController.animateTo(
-          maxExtent,
-          duration: ChatConfig.scrollDuration,
-          curve: Curves.easeOut,
-        );
+        _scrollController.animateTo(maxExtent, duration: ChatConfig.scrollDuration, curve: Curves.easeOut);
       }
     });
   }
@@ -219,9 +171,7 @@ class ChatOutputState extends State<ChatOutput> {
   /// Displays an error snackbar with the given message.
   void _showErrorSnackBar(String message) {
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -234,10 +184,7 @@ class ChatOutputState extends State<ChatOutput> {
     return Column(
       children: [
         if (_isLoadingOlder)
-          const Padding(
-            padding: EdgeInsets.all(ChatConfig.padding),
-            child: CircularProgressIndicator(),
-          ),
+          const Padding(padding: EdgeInsets.all(ChatConfig.padding), child: CircularProgressIndicator()),
         Expanded(
           child: ListView.builder(
             controller: _scrollController,
@@ -252,11 +199,11 @@ class ChatOutputState extends State<ChatOutput> {
                 showOriginal: _showOriginalMap[message.id] ?? false,
                 onToggleOriginal:
                     () => setState(() {
-                      _showOriginalMap[message.id] =
-                          !(_showOriginalMap[message.id] ?? false);
+                      _showOriginalMap[message.id] = !(_showOriginalMap[message.id] ?? false);
                     }),
-                isOriginalMessageToggleEnabled: _chatOriginalToggleEnabled,
-                isOriginalViewEnabled: _chatOriginalViewEnabled,
+                isOriginalMessageToggleEnabled:
+                    ref.watch(memberControllerProvider).member?.chatOriginalToggleEnabled ?? false,
+                isOriginalViewEnabled: ref.watch(memberControllerProvider).member?.chatOriginalViewEnabled ?? false,
               );
             },
           ),

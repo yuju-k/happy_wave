@@ -22,11 +22,18 @@ dependencies:
   flutter_launcher_icons: ^0.14.3
   firebase_messaging: ^15.2.7
   url_launcher: ^6.3.1
+  # 데이터직렬화
+  json_annotation: ^4.9.0
+  # 상태관리
+  flutter_riverpod: ^2.6.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  # 데이터직렬화
+  json_serializable: ^6.9.4
+  build_runner: ^2.4.15 # dart run build_runner build
 
 flutter:
   uses-material-design: true
