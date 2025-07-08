@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:happy_wave/utils/security_util.dart';
 import '../../system_log.dart';
 
 Future<void> sendMessageToRoom({
@@ -18,15 +19,19 @@ Future<void> sendMessageToRoom({
       final chatRoomRef = firestore.collection('chatrooms').doc(roomId);
       final messageRef = chatRoomRef.collection('messages').doc();
 
+      var encryptedOriginalMessage = SecurityUtil.encryptChat(originalMessage);
+      var encryptedSuggestionResult = SecurityUtil.encryptChat(suggestionResult ?? '');
+      var encryptedText = SecurityUtil.encryptChat(text);
+
       // 메시지 데이터
       final message = {
-        'text': text,
+        'text': encryptedText,
         'authorId': authorId,
         'authorName': authorName,
         'createdAt': FieldValue.serverTimestamp(),
-        'originalMessage': originalMessage,
+        'originalMessage': encryptedOriginalMessage,
         'sentimentResult': sentimentResult,
-        'suggestionResult': suggestionResult,
+        'suggestionResult': encryptedSuggestionResult,
         'converted': converted, // 초기값은 false
       };
 
