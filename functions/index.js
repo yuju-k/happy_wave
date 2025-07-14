@@ -45,8 +45,8 @@ exports.sendChatMessageNotification = functions.firestore
 
       // 4. 알림 페이로드를 구성합니다.
       const notificationPayload = {
-        title: `${senderName}님이 메시지를 보냈습니다.`,
-        body: messageText,
+        title: "HappyWave",
+        body: "메시지가 도착했습니다.",
       };
 
       const dataPayload = {

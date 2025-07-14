@@ -15,6 +15,7 @@ final class SecurityUtil {
   }
 
   static String encryptChat(String plainText) {
+    if (plainText.isEmpty) return "";
     final iv = encrypt.IV.fromSecureRandom(16);
     final encrypted = _encrypter.encrypt(plainText, iv: iv);
     return '${iv.base64}:${encrypted.base64}';

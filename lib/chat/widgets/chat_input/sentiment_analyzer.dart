@@ -20,33 +20,25 @@ class SentimentAnalyzer {
   // ===========================================
   // 생성자
   // ===========================================
-  SentimentAnalyzer({
-    required this.onSentimentAnalyzed,
-    required this.onSuggestionGenerated,
-    required this.onError,
-  }) : _model = FirebaseAI.vertexAI(
-         // 모델을 생성자에서 초기화, 상태 비저장 호출에 사용
-         auth: FirebaseAuth.instance,
-       ).generativeModel(model: 'gemini-2.0-flash');
+  SentimentAnalyzer({required this.onSentimentAnalyzed, required this.onSuggestionGenerated, required this.onError})
+    : _model = FirebaseAI.vertexAI(
+        // 모델을 생성자에서 초기화, 상태 비저장 호출에 사용
+        auth: FirebaseAuth.instance,
+      ).generativeModel(model: 'gemini-2.0-flash');
 
   // ===========================================
   // 초기화 및 해제
   // ===========================================
   Future<void> initialize(String chatRoomId) async {
     try {
-      final pastMessages = await MessageService().getRecentMessages(
-        roomId: chatRoomId,
-        limit: 20,
-      );
+      final pastMessages = await MessageService().getRecentMessages(roomId: chatRoomId, limit: 20);
 
       var totalLength = 0;
       const maxLength = 2000;
 
       for (final msg in pastMessages) {
         if (totalLength + msg.text.length <= maxLength) {
-          _externalHistory.add(
-            Content('user', [TextPart(msg.text)]),
-          ); // 실제 사용자 메시지만 추가
+          _externalHistory.add(Content('user', [TextPart(msg.text)])); // 실제 사용자 메시지만 추가
           totalLength += msg.text.length;
           debugPrint('메시지추가:${msg.text}');
         } else {
@@ -78,7 +70,6 @@ class SentimentAnalyzer {
         suggestion = await _generateSuggestion(message);
         debugPrint('제안 메시지: $suggestion');
       }
-
       onSentimentAnalyzed(sentiment, suggestion);
     } catch (e) {
       onError('감정 분석 중 오류 발생: $e');
@@ -103,9 +94,7 @@ class SentimentAnalyzer {
     // 상태 비저장 호출을 위해 필요한 컨텍스트와 프롬프트 조합
     final List<Content> requestContent = [
       // _externalHistory에서 최근 메시지들을 컨텍스트로 포함 (최대 10개)
-      ..._externalHistory.sublist(
-        (_externalHistory.length - 10).clamp(0, _externalHistory.length),
-      ),
+      ..._externalHistory.sublist((_externalHistory.length - 10).clamp(0, _externalHistory.length)),
       Content.text(sentimentPrompt), // 감정 분석 지시 프롬프트
       Content('user', [TextPart(currentMessage)]), // 현재 사용자 메시지
     ];
@@ -151,9 +140,7 @@ class SentimentAnalyzer {
       // 상태 비저장 호출을 위해 필요한 컨텍스트와 프롬프트 조합
       final List<Content> requestContent = [
         // _externalHistory에서 최근 메시지들을 컨텍스트로 포함 (최대 10개)
-        ..._externalHistory.sublist(
-          (_externalHistory.length - 10).clamp(0, _externalHistory.length),
-        ),
+        ..._externalHistory.sublist((_externalHistory.length - 10).clamp(0, _externalHistory.length)),
         Content.text(suggestionPrompt), // 제안 지시 프롬프트
         Content('user', [TextPart(currentMessage)]), // 현재 사용자 메시지
       ];

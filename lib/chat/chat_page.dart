@@ -1,17 +1,20 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:happy_wave/core/notification/notification_service.dart';
+import 'package:happy_wave/core/notification/providers.dart';
 import 'services/user_service.dart';
 import 'widgets/chat_input/chat_input.dart';
 import 'widgets/chat_output.dart';
 
-class ChatPage extends StatefulWidget {
+class ChatPage extends ConsumerStatefulWidget {
   const ChatPage({super.key});
 
   @override
-  State<ChatPage> createState() => _ChatPageState();
+  ConsumerState<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
+class _ChatPageState extends ConsumerState<ChatPage> with WidgetsBindingObserver {
   String? _chatRoomId;
   String? _myName;
   String? _otherUserName;
@@ -25,6 +28,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _initializeNotificationService();
     _initializeChat();
   }
 
@@ -71,6 +75,12 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
       _showErrorSnackBar('채팅 초기화 중 오류가 발생했습니다: $e');
       setState(() => _isLoading = false);
     }
+  }
+
+  // 알림 기능 초기화
+  Future<void> _initializeNotificationService() async {
+    var notificationService = ref.read(notificationServiceProvider);
+    await notificationService.value?.requestPermission();
   }
 
   /// 오류 메시지를 SnackBar로 표시합니다.

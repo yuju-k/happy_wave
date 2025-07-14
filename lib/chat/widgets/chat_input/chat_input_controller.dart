@@ -78,7 +78,6 @@ class ChatInputController {
       debugPrint('전송할 메시지: $originalMessage');
 
       await _sentimentAnalyzer.analyzeSentiment(originalMessage);
-
       // 감정 분석 결과는 콜백으로 처리됨
     } catch (e) {
       _handleError('메시지 전송 중 오류: $e');
@@ -86,10 +85,7 @@ class ChatInputController {
     }
   }
 
-  Future<void> sendMessage(
-    String message, {
-    bool isFromSuggestionPanel = false,
-  }) async {
+  Future<void> sendMessage(String message, {bool isFromSuggestionPanel = false}) async {
     // isFromSuggestionPanel 매개변수 추가
     try {
       await sendMessageToRoom(

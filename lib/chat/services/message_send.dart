@@ -22,7 +22,6 @@ Future<void> sendMessageToRoom({
       var encryptedOriginalMessage = SecurityUtil.encryptChat(originalMessage);
       var encryptedSuggestionResult = SecurityUtil.encryptChat(suggestionResult ?? '');
       var encryptedText = SecurityUtil.encryptChat(text);
-
       // 메시지 데이터
       final message = {
         'text': encryptedText,
@@ -50,6 +49,7 @@ Future<void> sendMessageToRoom({
     systemLogService.logMessageSent(authorId);
   } catch (e) {
     //print('Error sending message to room $roomId: $e');
+    print("e : ${e.toString()}");
     rethrow;
   }
 }

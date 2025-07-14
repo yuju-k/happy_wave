@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:happy_wave/auth/controller/providers.dart';
+import 'package:happy_wave/core/notification/notification_service.dart';
 import 'auth/auth_firebase.dart';
 import 'profile/profile.dart';
 import 'system_log.dart';
@@ -24,7 +25,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     _checkNameExists();
     _logUserLogin();
     _saveDeviceToken();
-    _initializeFCMListeners();
     _initializeMemberController();
     InviteAlertListener.startListening(context);
   }
@@ -79,35 +79,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     } catch (e) {
       debugPrint('Error saving FCM token: $e');
     }
-  }
-
-  // FCM 알림 수신 리스너 초기화
-  void _initializeFCMListeners() {
-    // 포그라운드 메시지 처리
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Got a message whilst in the foreground!');
-      debugPrint('Message data: ${message.data}');
-
-      if (message.notification != null) {
-        debugPrint(
-          'Message also contained a notification: ${message.notification?.title}, ${message.notification?.body}',
-        );
-        // 이 부분은 나중에 로컬 알림 UI를 구현할 때 추가할 수 있습니다.
-      }
-    });
-
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint('A new onMessageOpenedApp event was published!');
-      debugPrint('Message data: ${message.data}');
-    });
-
-    // 앱이 완전히 종료된 상태에서 알림을 통해 실행되었을 때 메시지 처리
-    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
-      if (message != null) {
-        debugPrint('App launched from terminated state by notification!');
-        debugPrint('Message data: ${message.data}');
-      }
-    });
   }
 
   Future<void> _logUserLogin() async {
