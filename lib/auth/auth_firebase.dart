@@ -1,5 +1,9 @@
+import 'dart:math';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:happy_wave/auth/domain/entities/member.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -10,20 +14,10 @@ class AuthService {
   // 회원가입
   Future<String?> signUp(String email, String password) async {
     try {
-      await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      await _firestore
-          .collection(_usersCollection)
-          .doc(_auth.currentUser?.uid)
-          .set({
-            'uid': _auth.currentUser?.uid,
-            'email': email,
-            'createdAt': FieldValue.serverTimestamp(),
-            'role': 'user',
-          });
+      var credential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      if (credential.user == null) throw FirebaseAuthException(code: "code", message: "회원가입 중 오류가 발생했습니다.");
+      var member = Member.of(uid: credential.user!.uid, email: email);
+      await _firestore.collection(_usersCollection).doc(_auth.currentUser?.uid).set(member.toJson());
 
       return null; // 성공 시 에러 없음
     } on FirebaseAuthException catch (e) {
@@ -56,6 +50,13 @@ class AuthService {
   // 로그아웃
   Future<void> signOut() async {
     await _auth.signOut();
+  }
+
+  Future<Member?> findByCurrentUser() async {
+    var memberInstance = await _firestore.collection(_usersCollection).doc(_auth.currentUser?.uid).get();
+    print("memberInstance : ${memberInstance.data()}, currentUser.id : ${_auth.currentUser?.uid}");
+    var member = Member.fromJson(memberInstance.data() as Map<String, dynamic>);
+    return member;
   }
 
   // 현재 사용자 반환

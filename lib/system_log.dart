@@ -12,6 +12,10 @@ class SystemLogService {
       await _firestore.collection('system_log').doc(uid).set({
         'lastLogin': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+
+      await _firestore.collection('system_log').doc(uid).collection('login_log').add({
+        'loginDate': DateTime.now().toIso8601String(),
+      });
     } catch (e) {
       debugPrint('로그인 로그 기록 실패: $e');
     }
@@ -40,13 +44,10 @@ class SystemLogService {
         // 문서에 업데이트 (merge: true로 기존 필드 보존)
         transaction.set(docRef, {
           sentimentType: currentCount,
-          'lastSentimentUpdateAt':
-              FieldValue.serverTimestamp(), // 필드명 변경: lastUpdated -> lastSentimentUpdateAt
+          'lastSentimentUpdateAt': FieldValue.serverTimestamp(), // 필드명 변경: lastUpdated -> lastSentimentUpdateAt
         }, SetOptions(merge: true));
       });
-      debugPrint(
-        'User $uid Sentiment log updated: $sentimentType count increased.',
-      );
+      debugPrint('User $uid Sentiment log updated: $sentimentType count increased.');
     } catch (e) {
       debugPrint('Error logging sentiment for user $uid: $e');
     }
@@ -56,8 +57,7 @@ class SystemLogService {
   Future<Map<String, dynamic>?> getSentimentCounts(String uid) async {
     try {
       // system_log/{uid} 문서에서 직접 가져오도록 변경
-      final docSnapshot =
-          await _firestore.collection('system_log').doc(uid).get();
+      final docSnapshot = await _firestore.collection('system_log').doc(uid).get();
       if (docSnapshot.exists) {
         return docSnapshot.data();
       }
@@ -88,9 +88,7 @@ class SystemLogService {
         currentCount++;
 
         // 문서에 업데이트 (merge: true로 기존 필드 보존)
-        transaction.set(docRef, {
-          'messageCount': currentCount,
-        }, SetOptions(merge: true));
+        transaction.set(docRef, {'messageCount': currentCount}, SetOptions(merge: true));
       });
       debugPrint('User $uid message count increased.');
     } catch (e) {
@@ -113,10 +111,8 @@ class SystemLogService {
         if (docSnapshot.exists) {
           final data = docSnapshot.data();
           if (data != null) {
-            selectedAndSentConvertedCount =
-                data['selectedAndSentConvertedCount'] as int? ?? 0;
-            selectedAndSentOriginalCount =
-                data['selectedAndSentOriginalCount'] as int? ?? 0;
+            selectedAndSentConvertedCount = data['selectedAndSentConvertedCount'] as int? ?? 0;
+            selectedAndSentOriginalCount = data['selectedAndSentOriginalCount'] as int? ?? 0;
           }
         }
 
@@ -131,13 +127,9 @@ class SystemLogService {
           'selectedAndSentOriginalCount': selectedAndSentOriginalCount,
         }, SetOptions(merge: true));
       });
-      debugPrint(
-        'User $uid message selected and sent logged: Converted: $converted',
-      );
+      debugPrint('User $uid message selected and sent logged: Converted: $converted');
     } catch (e) {
-      debugPrint(
-        'Error logging message selected and sent status for user $uid: $e',
-      );
+      debugPrint('Error logging message selected and sent status for user $uid: $e');
     }
   }
 }

@@ -1,17 +1,19 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:happy_wave/core/notification/notification_service.dart';
 import 'services/user_service.dart';
 import 'widgets/chat_input/chat_input.dart';
 import 'widgets/chat_output.dart';
 
-class ChatPage extends StatefulWidget {
+class ChatPage extends ConsumerStatefulWidget {
   const ChatPage({super.key});
 
   @override
-  State<ChatPage> createState() => _ChatPageState();
+  ConsumerState<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
+class _ChatPageState extends ConsumerState<ChatPage> with WidgetsBindingObserver {
   String? _chatRoomId;
   String? _myName;
   String? _otherUserName;
@@ -20,7 +22,6 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   bool _isLoading = true;
   final _auth = FirebaseAuth.instance;
   final _userService = UserService();
-  final GlobalKey<ChatOutputState> _chatOutputKey = GlobalKey();
 
   @override
   void initState() {
@@ -33,25 +34,6 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-  }
-
-  @override
-  void didChangeMetrics() {
-    super.didChangeMetrics();
-    final bottomInset =
-        WidgetsBinding
-            .instance
-            .platformDispatcher
-            .views
-            .first
-            .viewInsets
-            .bottom;
-    if (bottomInset > 0) {
-      Future.delayed(const Duration(milliseconds: 50), () {
-        // Scroll to the end of the chat when the keyboard appears.
-        _chatOutputKey.currentState?.scrollToEnd();
-      });
-    }
   }
 
   /// 채팅방 정보와 사용자 데이터를 초기화합니다.
@@ -72,10 +54,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
       }
 
       final myProfile = await _userService.fetchMyProfile(user.uid);
-      final otherUserInfo = await _userService.fetchOtherUserInfo(
-        roomId,
-        user.uid,
-      );
+      final otherUserInfo = await _userService.fetchOtherUserInfo(roomId, user.uid);
 
       if (myProfile == null || myProfile['name'] == null) {
         _showErrorSnackBar('내 프로필 정보를 불러오지 못했습니다.');
@@ -99,9 +78,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   /// 오류 메시지를 SnackBar로 표시합니다.
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   /// 설정 페이지로 이동합니다.
@@ -124,23 +101,14 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
           padding: const EdgeInsets.only(left: 16.0),
           child:
               _otherProfileImage != null
-                  ? CircleAvatar(
-                    radius: 22,
-                    backgroundImage: NetworkImage(_otherProfileImage!),
-                  )
+                  ? CircleAvatar(radius: 22, backgroundImage: NetworkImage(_otherProfileImage!))
                   : const CircleAvatar(
                     radius: 22,
                     backgroundColor: Colors.white60,
                     child: Icon(Icons.person, size: 22),
                   ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: _navigateToSettings,
-            tooltip: '설정',
-          ),
-        ],
+        actions: [IconButton(icon: const Icon(Icons.settings), onPressed: _navigateToSettings, tooltip: '설정')],
       ),
       body: SafeArea(
         child: Column(
@@ -148,7 +116,6 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
             Expanded(
               flex: 3,
               child: ChatOutput(
-                key: _chatOutputKey,
                 chatRoomId: _chatRoomId!,
                 myUserId: _auth.currentUser!.uid,
                 myName: _myName!,
@@ -156,11 +123,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                 otherUserName: _otherUserName,
               ),
             ),
-            ChatInput(
-              chatRoomId: _chatRoomId!,
-              myUserId: _auth.currentUser!.uid,
-              myName: _myName!,
-            ),
+            ChatInput(chatRoomId: _chatRoomId!, myUserId: _auth.currentUser!.uid, myName: _myName!),
           ],
         ),
       ),

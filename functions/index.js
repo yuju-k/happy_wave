@@ -17,7 +17,7 @@ exports.sendChatMessageNotification = functions.firestore
       console.log(chatRoomDoc);
 
       // 채팅방 문서가 없거나 사용자 목록이 비어있으면 종료
-      if (!chatRoomDoc.exists || !chatRoomDoc.data().users) {
+      if (!chatRoomDoc.exists || !chatRoomDoc.data().users || chatRoomDoc.data().status === 'disconnected') {
         console.log("Chat room not found or no users in chat room.");
         return null;
       }
@@ -45,8 +45,8 @@ exports.sendChatMessageNotification = functions.firestore
 
       // 4. 알림 페이로드를 구성합니다.
       const notificationPayload = {
-        title: `${senderName}님이 메시지를 보냈습니다.`,
-        body: messageText,
+        title: "HappyWave",
+        body: "메시지가 도착했습니다.",
       };
 
       const dataPayload = {

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:happy_wave/utils/security_util.dart';
 
 class MessageService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -11,23 +12,13 @@ class MessageService {
   static const int _initialLoadCount = 30;
 
   /// 주어진 채팅방 ID에 대한 실시간 메시지 스트림을 제공합니다.
-  Stream<types.Message> streamNewMessages(
-    String roomId, {
-    DateTime? afterTime,
-  }) {
+  Stream<types.Message> streamNewMessages(String roomId, {DateTime? afterTime}) {
     try {
-      Query query = _firestore
-          .collection('chatrooms')
-          .doc(roomId)
-          .collection('messages')
-          .orderBy('createdAt');
+      Query query = _firestore.collection('chatrooms').doc(roomId).collection('messages').orderBy('createdAt');
 
       // 특정 시간 이후의 메시지만 스트리밍 (새 메시지만)
       if (afterTime != null) {
-        query = query.where(
-          'createdAt',
-          isGreaterThan: Timestamp.fromDate(afterTime),
-        );
+        query = query.where('createdAt', isGreaterThan: Timestamp.fromDate(afterTime));
       }
 
       return query
@@ -40,10 +31,7 @@ class MessageService {
               throw Exception('Message data is null');
             }
 
-            return _createMessageFromData(
-              change.doc.id,
-              data as Map<String, dynamic>,
-            );
+            return _createMessageFromData(change.doc.id, data as Map<String, dynamic>);
           });
     } catch (e) {
       debugPrint('Error streaming messages for room $roomId: $e');
@@ -52,10 +40,7 @@ class MessageService {
   }
 
   /// 초기 메시지 로드 (최신 n개)
-  Future<List<types.TextMessage>> loadInitialMessages({
-    required String roomId,
-    int limit = _initialLoadCount,
-  }) async {
+  Future<List<types.TextMessage>> loadInitialMessages({required String roomId, int limit = _initialLoadCount}) async {
     try {
       final snapshot =
           await _firestore
@@ -110,10 +95,7 @@ class MessageService {
   }
 
   /// 최근 메시지들을 불러옵니다 (기존 API 호환성 유지)
-  Future<List<types.TextMessage>> getRecentMessages({
-    required String roomId,
-    int limit = 10,
-  }) async {
+  Future<List<types.TextMessage>> getRecentMessages({required String roomId, int limit = 10}) async {
     try {
       final snapshot =
           await _firestore
@@ -138,10 +120,7 @@ class MessageService {
   }
 
   /// 메시지 데이터로부터 TextMessage 객체 생성
-  types.TextMessage _createMessageFromData(
-    String id,
-    Map<String, dynamic> data,
-  ) {
+  types.TextMessage _createMessageFromData(String id, Map<String, dynamic> data) {
     return types.TextMessage(
       id: id,
       author: types.User(id: data['authorId'] as String),
@@ -149,21 +128,18 @@ class MessageService {
           data['createdAt'] is Timestamp
               ? (data['createdAt'] as Timestamp).millisecondsSinceEpoch
               : DateTime.now().millisecondsSinceEpoch,
-      text: data['text'] as String,
+      text: SecurityUtil.decryptChat((data['text'] as String)),
       metadata: {
         'converted': data['converted'] as bool? ?? false,
-        'originalMessage': data['originalMessage'] as String? ?? '',
+        'originalMessage': SecurityUtil.decryptChat((data['originalMessage'] as String? ?? '')),
         'sentimentResult': data['sentimentResult'] as String? ?? '',
-        'suggestionResult': data['suggestionResult'] as String? ?? '',
+        'suggestionResult': SecurityUtil.decryptChat(data['suggestionResult'] as String? ?? ''),
       },
     );
   }
 
   /// 메시지 캐시 관리를 위한 오래된 메시지 정리
-  void clearOldMessagesFromMemory(
-    List<types.Message> messages, {
-    int keepCount = 50,
-  }) {
+  void clearOldMessagesFromMemory(List<types.Message> messages, {int keepCount = 50}) {
     if (messages.length > keepCount) {
       messages.removeRange(0, messages.length - keepCount);
     }
