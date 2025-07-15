@@ -1,9 +1,19 @@
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
+  // 1. private 생성자
+  NotificationService._privateConstructor();
+
+  // 2. static 인스턴스
+  static final NotificationService _instance = NotificationService._privateConstructor();
+
+  // 3. public getter
+  static NotificationService get instance => _instance;
+
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   Future<void> initialize() async {
@@ -36,7 +46,7 @@ class NotificationService {
     }
   }
 
-  Future<void> _showNotification() async {
+  Future<void> showNotification() async {
     var androidDetails = AndroidNotificationDetails(
       'happy_wave',
       'happy_wave',
@@ -57,14 +67,27 @@ class NotificationService {
   }
 
   Future<void> settingHandler() async {
-    FirebaseMessaging.instance.requestPermission();
+    var settings = await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      debugPrint('User granted permission');
+    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+      debugPrint('User granted provisional permission');
+    } else {
+      debugPrint('User declined or has not accepted permission');
+      return;
+    }
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      _showNotification();
-    });
-
-    FirebaseMessaging.onBackgroundMessage((message) async {
-      _showNotification();
+      showNotification();
     });
   }
 }

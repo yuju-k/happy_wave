@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:happy_wave/auth/controller/providers.dart';
+import 'package:happy_wave/core/notification/notification_service.dart';
 import 'firebase_options.dart';
 import 'home.dart';
 import 'auth/sign_up.dart';
@@ -11,16 +12,16 @@ import 'auth/sign_in.dart';
 import 'profile/profile.dart';
 import 'settings/settings_page.dart';
 
-@pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  debugPrint("Handling a background message: ${message.messageId}");
+  NotificationService.instance.showNotification();
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  await NotificationService.instance.initialize();
+  await NotificationService.instance.settingHandler();
   runApp(ProviderScope(child: MainApp()));
 }
 

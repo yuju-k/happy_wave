@@ -45,27 +45,11 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     try {
       // 1. 알림 권한 요청
-      NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
-
-      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        debugPrint('User granted permission');
-      } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
-        debugPrint('User granted provisional permission');
-      } else {
-        debugPrint('User declined or has not accepted permission');
-        return; // 권한이 없으면 토큰을 저장하지 않습니다.
-      }
+      await NotificationService.instance.requestPermission();
 
       // 2. FCM 토큰 가져오기
       String? token = await FirebaseMessaging.instance.getToken();
+
       if (token != null) {
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'fcmToken': token,
