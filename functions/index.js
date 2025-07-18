@@ -8,8 +8,8 @@ exports.sendChatMessageNotification = functions.firestore
       const messageData = snapshot.data();
       const roomId = context.params.roomId;
       const senderId = messageData.authorId;
-      const messageText = messageData.text;
-      const senderName = messageData.authorName;
+      // const messageText = messageData.text;
+      // const senderName = messageData.authorName;
 
       // 1. 채팅방의 사용자 목록을 가져옵니다.
       const chatRoomRef = admin.firestore().collection("chatrooms").doc(roomId);
@@ -17,7 +17,8 @@ exports.sendChatMessageNotification = functions.firestore
       console.log(chatRoomDoc);
 
       // 채팅방 문서가 없거나 사용자 목록이 비어있으면 종료
-      if (!chatRoomDoc.exists || !chatRoomDoc.data().users || chatRoomDoc.data().status === 'disconnected') {
+      if (!chatRoomDoc.exists || !chatRoomDoc.data().users ||
+      chatRoomDoc.data().status === "disconnected") {
         console.log("Chat room not found or no users in chat room.");
         return null;
       }

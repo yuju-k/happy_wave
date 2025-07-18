@@ -18,7 +18,7 @@ class MemberController extends StateNotifier<MemberState> {
 
   Future<void> refreshMember() async {
     var result = await AuthService().findByCurrentUser();
-    print("findResult : ${result}");
+    print("findResult : $result");
     if (result == null) return;
     state = state.copyWith(member: result);
   }

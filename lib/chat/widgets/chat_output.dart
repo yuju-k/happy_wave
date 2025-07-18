@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,7 +53,9 @@ class _ChatOutputState extends ConsumerState<ChatOutput> {
   /// Loads initial messages for the chat room.
   Future<void> _loadInitialMessages() async {
     try {
-      final initialMessages = await _messageService.loadInitialMessages(roomId: widget.chatRoomId);
+      final initialMessages = await _messageService.loadInitialMessages(
+        roomId: widget.chatRoomId,
+      );
 
       if (!mounted) return;
 
@@ -68,7 +68,9 @@ class _ChatOutputState extends ConsumerState<ChatOutput> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Future.delayed(Duration(milliseconds: 500), () {
           if (mounted && _scrollController.hasClients) {
-            _scrollController.jumpTo(_scrollController.position.maxScrollExtent + context.size!.height);
+            _scrollController.jumpTo(
+              _scrollController.position.maxScrollExtent + context.size!.height,
+            );
           }
         });
       });
@@ -81,19 +83,28 @@ class _ChatOutputState extends ConsumerState<ChatOutput> {
 
   /// Subscribes to real-time new message updates.
   void _subscribeToNewMessages() {
-    final afterTime = _messages.isNotEmpty ? DateTime.fromMillisecondsSinceEpoch(_messages.last.createdAt!) : null;
+    final afterTime =
+        _messages.isNotEmpty
+            ? DateTime.fromMillisecondsSinceEpoch(_messages.last.createdAt!)
+            : null;
 
-    _messageService.streamNewMessages(widget.chatRoomId, afterTime: afterTime).listen((newMessage) {
-      if (!mounted) return;
+    _messageService
+        .streamNewMessages(widget.chatRoomId, afterTime: afterTime)
+        .listen(
+          (newMessage) {
+            if (!mounted) return;
 
-      setState(() {
-        _messages.add(newMessage);
-        _showOriginalMap[newMessage.id] = false;
-        _messageService.clearOldMessagesFromMemory(_messages);
-      });
+            setState(() {
+              _messages.add(newMessage);
+              _showOriginalMap[newMessage.id] = false;
+              _messageService.clearOldMessagesFromMemory(_messages);
+            });
 
-      WidgetsBinding.instance.addPostFrameCallback((_) => scrollToEnd());
-    }, onError: (error) => _showErrorSnackBar('Message stream error: $error'));
+            WidgetsBinding.instance.addPostFrameCallback((_) => scrollToEnd());
+          },
+          onError:
+              (error) => _showErrorSnackBar('Message stream error: $error'),
+        );
   }
 
   /// Handles scroll events to load older messages when reaching the top.
@@ -113,9 +124,14 @@ class _ChatOutputState extends ConsumerState<ChatOutput> {
     setState(() => _isLoadingOlder = true);
 
     try {
-      final beforeTime = DateTime.fromMillisecondsSinceEpoch(_messages.first.createdAt!);
+      final beforeTime = DateTime.fromMillisecondsSinceEpoch(
+        _messages.first.createdAt!,
+      );
 
-      final olderMessages = await _messageService.loadOlderMessages(roomId: widget.chatRoomId, beforeTime: beforeTime);
+      final olderMessages = await _messageService.loadOlderMessages(
+        roomId: widget.chatRoomId,
+        beforeTime: beforeTime,
+      );
 
       if (!mounted) return;
 
@@ -163,7 +179,11 @@ class _ChatOutputState extends ConsumerState<ChatOutput> {
 
       // If not at the bottom, retry scrolling
       if (currentPosition < maxExtent - 10) {
-        _scrollController.animateTo(maxExtent, duration: ChatConfig.scrollDuration, curve: Curves.easeOut);
+        _scrollController.animateTo(
+          maxExtent,
+          duration: ChatConfig.scrollDuration,
+          curve: Curves.easeOut,
+        );
       }
     });
   }
@@ -171,7 +191,9 @@ class _ChatOutputState extends ConsumerState<ChatOutput> {
   /// Displays an error snackbar with the given message.
   void _showErrorSnackBar(String message) {
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -184,7 +206,10 @@ class _ChatOutputState extends ConsumerState<ChatOutput> {
     return Column(
       children: [
         if (_isLoadingOlder)
-          const Padding(padding: EdgeInsets.all(ChatConfig.padding), child: CircularProgressIndicator()),
+          const Padding(
+            padding: EdgeInsets.all(ChatConfig.padding),
+            child: CircularProgressIndicator(),
+          ),
         Expanded(
           child: ListView.builder(
             controller: _scrollController,
@@ -199,11 +224,21 @@ class _ChatOutputState extends ConsumerState<ChatOutput> {
                 showOriginal: _showOriginalMap[message.id] ?? false,
                 onToggleOriginal:
                     () => setState(() {
-                      _showOriginalMap[message.id] = !(_showOriginalMap[message.id] ?? false);
+                      _showOriginalMap[message.id] =
+                          !(_showOriginalMap[message.id] ?? false);
                     }),
                 isOriginalMessageToggleEnabled:
-                    ref.watch(memberControllerProvider).member?.chatOriginalToggleEnabled ?? false,
-                isOriginalViewEnabled: ref.watch(memberControllerProvider).member?.chatOriginalViewEnabled ?? false,
+                    ref
+                        .watch(memberControllerProvider)
+                        .member
+                        ?.chatOriginalToggleEnabled ??
+                    false,
+                isOriginalViewEnabled:
+                    ref
+                        .watch(memberControllerProvider)
+                        .member
+                        ?.chatOriginalViewEnabled ??
+                    false,
               );
             },
           ),
