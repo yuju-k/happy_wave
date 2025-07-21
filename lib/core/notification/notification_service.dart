@@ -60,7 +60,7 @@ class NotificationService {
       'happy_wave',
       importance: Importance.max,
       priority: Priority.high,
-      icon: 'app_icon',
+      icon: 'ic_launcher',
     );
 
     var iosDetails = DarwinNotificationDetails(
