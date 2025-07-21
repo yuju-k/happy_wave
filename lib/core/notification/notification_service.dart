@@ -9,19 +9,15 @@ class NotificationService {
   NotificationService._privateConstructor();
 
   // 2. static 인스턴스
-  static final NotificationService _instance =
-      NotificationService._privateConstructor();
+  static final NotificationService _instance = NotificationService._privateConstructor();
 
   // 3. public getter
   static NotificationService get instance => _instance;
 
-  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   Future<void> initialize() async {
-    var initializationSettingsAndroid = AndroidInitializationSettings(
-      'mipmap/ic_launcher',
-    );
+    var initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
 
     var initializationSettingsDarwin = DarwinInitializationSettings(
       requestSoundPermission: true,
@@ -40,16 +36,12 @@ class NotificationService {
   Future<void> requestPermission() async {
     if (Platform.isAndroid) {
       await _flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >()
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
           ?.requestNotificationsPermission();
     }
     if (Platform.isIOS) {
       await _flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin
-          >()
+          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(alert: true, badge: true, sound: true);
     }
   }
@@ -60,19 +52,12 @@ class NotificationService {
       'happy_wave',
       importance: Importance.max,
       priority: Priority.high,
-      icon: 'mipmap/ic_launcher',
+      icon: '@mipmap/ic_launcher',
     );
 
-    var iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
+    var iosDetails = DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true);
 
-    var notificationDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
+    var notificationDetails = NotificationDetails(android: androidDetails, iOS: iosDetails);
     await _flutterLocalNotificationsPlugin.show(
       0, // 알림 ID
       'HappyWave', // 제목
@@ -94,8 +79,7 @@ class NotificationService {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       debugPrint('User granted permission');
-    } else if (settings.authorizationStatus ==
-        AuthorizationStatus.provisional) {
+    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
       debugPrint('User granted provisional permission');
     } else {
       debugPrint('User declined or has not accepted permission');
