@@ -87,7 +87,7 @@ class NotificationService {
     }
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      showNotification();
+      //showNotification();
     });
   }
 }
