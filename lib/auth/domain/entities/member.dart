@@ -31,11 +31,11 @@ class Member {
 
   factory Member.fromJson(Map<String, dynamic> json) {
     return Member(
-      uid: json['uid'],
-      email: json['email'],
+      uid: json['uid'] ?? '',
+      email: json['email'] ?? '',
       chatOriginalToggleEnabled: json['chatOriginalToggleEnabled'] ?? false,
       chatOriginalViewEnabled: json['chatOriginalViewEnabled'] ?? false,
-      chatroomId: json['chatroomId'] as String ?? '',
+      chatroomId: json['chatroomId'] ?? '',
       connectStatus: json['connectStatus'] ?? false,
       createdAt: _parseTimestamp(json['createdAt']),
       homeId: json['homeId'] ?? '',

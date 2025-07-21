@@ -78,7 +78,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     if (user == null) return;
 
     final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-    if (!doc.exists || !doc.data()!.containsKey('name')) {
+    if (!doc.exists || !doc.data()!.containsKey('name') || (doc.data()!['name'] as String).isEmpty) {
       if (mounted) {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ProfilePage()));
       }
