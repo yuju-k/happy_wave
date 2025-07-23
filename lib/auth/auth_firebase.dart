@@ -68,6 +68,9 @@ class AuthService {
     print(
       "memberInstance : ${memberInstance.data()}, currentUser.id : ${_auth.currentUser?.uid}",
     );
+    if (memberInstance.data() == null) {
+      return null;
+    }
     var member = Member.fromJson(memberInstance.data() as Map<String, dynamic>);
     return member;
   }

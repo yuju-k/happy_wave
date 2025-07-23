@@ -77,10 +77,19 @@ class _HomePageState extends ConsumerState<HomePage> {
     final user = AuthService().currentUser;
     if (user == null) return;
 
-    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-    if (!doc.exists || !doc.data()!.containsKey('name') || (doc.data()!['name'] as String).isEmpty) {
+    final doc =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+    if (!doc.exists ||
+        !doc.data()!.containsKey('name') ||
+        (doc.data()!['name'] as String).isEmpty) {
       if (mounted) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ProfilePage()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfilePage()),
+        );
       }
     }
   }
@@ -92,13 +101,17 @@ class _HomePageState extends ConsumerState<HomePage> {
       return const Scaffold(body: Center(child: Text("로그인이 필요합니다.")));
     }
 
-    final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userDoc = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
 
     return StreamBuilder<DocumentSnapshot>(
       stream: userDoc.snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
 
         final data = snapshot.data!.data() as Map<String, dynamic>?;
