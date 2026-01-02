@@ -15,11 +15,12 @@ class AuthService {
         email: email,
         password: password,
       );
-      if (credential.user == null)
+      if (credential.user == null) {
         throw FirebaseAuthException(
           code: "code",
           message: "회원가입 중 오류가 발생했습니다.",
         );
+      }
       var member = Member.of(uid: credential.user!.uid, email: email);
       await _firestore
           .collection(_usersCollection)
