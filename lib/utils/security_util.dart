@@ -27,8 +27,12 @@ final class SecurityUtil {
       return encryptedChat;
     }
 
-    final iv = encrypt.IV.fromBase64(parts[0]);
-    final encrypted = encrypt.Encrypted.fromBase64(parts[1]);
-    return _encrypter.decrypt(encrypted, iv: iv);
+    try {
+      final iv = encrypt.IV.fromBase64(parts[0]);
+      final encrypted = encrypt.Encrypted.fromBase64(parts[1]);
+      return _encrypter.decrypt(encrypted, iv: iv);
+    } catch (e) {
+      return encryptedChat;
+    }
   }
 }
