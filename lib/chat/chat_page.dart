@@ -42,14 +42,14 @@ class _ChatPageState extends ConsumerState<ChatPage>
       final user = _auth.currentUser;
       if (user == null) {
         _showErrorSnackBar('로그인이 필요합니다.');
-        setState(() => _isLoading = false);
+        if (mounted) setState(() => _isLoading = false);
         return;
       }
 
       final roomId = await _userService.fetchChatRoomIdForUser(user.uid);
       if (roomId == null) {
         _showErrorSnackBar('채팅방 정보를 불러오지 못했습니다.');
-        setState(() => _isLoading = false);
+        if (mounted) setState(() => _isLoading = false);
         return;
       }
 
@@ -63,6 +63,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
         _showErrorSnackBar('내 프로필 정보를 불러오지 못했습니다.');
       }
 
+      if (!mounted) return;
+
       setState(() {
         _chatRoomId = roomId;
         _myName = myProfile?['name'];
@@ -74,7 +76,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
       });
     } catch (e) {
       _showErrorSnackBar('채팅 초기화 중 오류가 발생했습니다: $e');
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
