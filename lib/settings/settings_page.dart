@@ -32,7 +32,7 @@ class SettingsPage extends StatelessWidget {
         .signOut()
         .then((_) {
           if (!context.mounted) return;
-          Navigator.pushReplacementNamed(context, '/');
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
         })
         .catchError((error) {
           if (!context.mounted) return;
