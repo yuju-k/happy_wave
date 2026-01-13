@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 import '../../system_log.dart';
 
@@ -49,7 +50,7 @@ Future<void> sendMessageToRoom({
     systemLogService.logMessageSent(authorId);
   } catch (e) {
     //print('Error sending message to room $roomId: $e');
-    print("e : ${e.toString()}");
+    debugPrint("e : ${e.toString()}");
     rethrow;
   }
 }

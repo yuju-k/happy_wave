@@ -100,7 +100,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
     }
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text(_otherUserName ?? ''),
         centerTitle: true,
@@ -127,24 +127,29 @@ class _ChatPageState extends ConsumerState<ChatPage>
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              flex: 3,
-              child: ChatOutput(
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            children: [
+              Expanded(
+                flex: 3,
+                child: ChatOutput(
+                  chatRoomId: _chatRoomId!,
+                  myUserId: _auth.currentUser!.uid,
+                  myName: _myName!,
+                  otherUserId: _otherUserId,
+                  otherUserName: _otherUserName,
+                ),
+              ),
+              ChatInput(
                 chatRoomId: _chatRoomId!,
                 myUserId: _auth.currentUser!.uid,
                 myName: _myName!,
-                otherUserId: _otherUserId,
-                otherUserName: _otherUserName,
               ),
-            ),
-            ChatInput(
-              chatRoomId: _chatRoomId!,
-              myUserId: _auth.currentUser!.uid,
-              myName: _myName!,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

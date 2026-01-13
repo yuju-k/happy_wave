@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:happy_wave/auth/auth_firebase.dart';
 
@@ -18,7 +19,7 @@ class MemberController extends StateNotifier<MemberState> {
 
   Future<void> refreshMember() async {
     var result = await AuthService().findByCurrentUser();
-    print("findResult : $result");
+    debugPrint("findResult : $result");
     if (result == null) return;
     state = state.copyWith(member: result);
   }
