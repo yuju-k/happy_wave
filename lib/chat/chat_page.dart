@@ -99,56 +99,58 @@ class _ChatPageState extends ConsumerState<ChatPage>
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      appBar: AppBar(
-        title: Text(_otherUserName ?? ''),
-        centerTitle: true,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16.0),
-          child:
-              _otherProfileImage != null
-                  ? CircleAvatar(
-                    radius: 22,
-                    backgroundImage: NetworkImage(_otherProfileImage!),
-                  )
-                  : const CircleAvatar(
-                    radius: 22,
-                    backgroundColor: Colors.white60,
-                    child: Icon(Icons.person, size: 22),
-                  ),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        appBar: AppBar(
+          title: Text(_otherUserName ?? ''),
+          centerTitle: true,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 16.0),
+            child:
+                _otherProfileImage != null
+                    ? CircleAvatar(
+                      radius: 22,
+                      backgroundImage: NetworkImage(_otherProfileImage!),
+                    )
+                    : const CircleAvatar(
+                      radius: 22,
+                      backgroundColor: Colors.white60,
+                      child: Icon(Icons.person, size: 22),
+                    ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: _navigateToSettings,
+              tooltip: '설정',
+            ),
+          ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: _navigateToSettings,
-            tooltip: '설정',
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Column(
-            children: [
-              Expanded(
-                flex: 3,
-                child: ChatOutput(
+        body: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Column(
+              children: [
+                Expanded(
+                  child: ChatOutput(
+                    chatRoomId: _chatRoomId!,
+                    myUserId: _auth.currentUser!.uid,
+                    myName: _myName!,
+                    otherUserId: _otherUserId,
+                    otherUserName: _otherUserName,
+                  ),
+                ),
+                ChatInput(
                   chatRoomId: _chatRoomId!,
                   myUserId: _auth.currentUser!.uid,
                   myName: _myName!,
-                  otherUserId: _otherUserId,
-                  otherUserName: _otherUserName,
                 ),
-              ),
-              ChatInput(
-                chatRoomId: _chatRoomId!,
-                myUserId: _auth.currentUser!.uid,
-                myName: _myName!,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
