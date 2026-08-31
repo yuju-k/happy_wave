@@ -42,6 +42,7 @@ class ChatInputController {
       onSentimentAnalyzed: _handleSentimentResult,
       onSuggestionGenerated: _handleSuggestionResult,
       onError: _handleAnalysisError,
+      myUserId: myUserId,
     );
   }
 
@@ -85,7 +86,10 @@ class ChatInputController {
     }
   }
 
-  Future<void> sendMessage(String message, {bool isFromSuggestionPanel = false}) async {
+  Future<void> sendMessage(
+    String message, {
+    bool isFromSuggestionPanel = false,
+  }) async {
     // isFromSuggestionPanel 매개변수 추가
     try {
       await sendMessageToRoom(

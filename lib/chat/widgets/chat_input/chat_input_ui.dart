@@ -128,7 +128,7 @@ class ChatInputUI {
       onTap: onPressed,
       child: Container(
         padding: const EdgeInsets.all(12),
-        height: 100,
+        height: 128,
         decoration: BoxDecoration(
           color: const Color(0xFFEDFFFE),
           borderRadius: BorderRadius.circular(8),
@@ -174,7 +174,7 @@ class ChatInputUI {
     return Text(
       message,
       style: const TextStyle(color: Colors.black87, fontSize: 14),
-      maxLines: 2,
+      maxLines: 4,
       overflow: TextOverflow.ellipsis,
     );
   }

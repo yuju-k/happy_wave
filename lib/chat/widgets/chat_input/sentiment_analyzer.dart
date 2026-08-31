@@ -1,159 +1,148 @@
-import 'package:flutter/material.dart';
-//import 'package:firebase_vertexai/firebase_vertexai.dart';
 import 'package:firebase_ai/firebase_ai.dart';
-import '../../services/message_service.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
+import '../../services/message_service.dart';
+import 'sentiment_response_parser.dart';
+
+/// Fast Flash-Lite for on-send classification. Avoids Gemini 3.7 thinking latency.
+const geminiFlashModel = 'gemini-3.5-flash-lite';
+
+const _maxHistoryMessages = 6;
+
+const _analysisSystemPrompt = '''
+가까운 사이 채팅의 "지금 보낼 메시지"만 분류하세요. 맥락은 참고만 하세요.
+생각하는 과정, 설명, 마크다운 없이 JSON만 출력하세요.
+
+sentiment:
+- negative: 비난, 비꼬기, 무시, 압박, 단정, 차가운 거절처럼 갈등을 키울 태도
+- positive: 공감, 배려, 협력처럼 관계를 부드럽게 하는 태도
+- neutral: 사실 전달, 일정 확인처럼 갈등도 친밀도 강화도 뚜렷하지 않음
+
+suggestion:
+- negative일 때만 같은 뜻의 더 부드러운 한국어 한 문장. 원문과 비슷한 길이.
+- positive/neutral이면 빈 문자열.
+''';
+
+class _HistoryTurn {
+  const _HistoryTurn({required this.isMine, required this.text});
+
+  final bool isMine;
+  final String text;
+}
 
 class SentimentAnalyzer {
-  // ===========================================
-  // 콜백 함수들
-  // ===========================================
+  SentimentAnalyzer({
+    required this.onSentimentAnalyzed,
+    required this.onSuggestionGenerated,
+    required this.onError,
+    required this.myUserId,
+  }) : _model = _firebaseAI.generativeModel(
+         model: geminiFlashModel,
+         systemInstruction: Content.system(_analysisSystemPrompt),
+         generationConfig: GenerationConfig(
+           maxOutputTokens: 128,
+           responseMimeType: 'application/json',
+           responseSchema: Schema.object(
+             properties: {
+               'sentiment': Schema.enumString(
+                 enumValues: const ['positive', 'negative', 'neutral'],
+                 description: '지금 보낼 메시지의 대화 태도',
+               ),
+               'suggestion': Schema.string(
+                 description: 'negative일 때만 부드러운 다시 쓰기, 아니면 빈 문자열',
+               ),
+             },
+           ),
+         ),
+       );
+
+  /// Agent Platform Gemini API (formerly Vertex AI), billed via Google Cloud/Blaze.
+  /// Gemini Developer API prepaid credits on this project are depleted.
+  static FirebaseAI get _firebaseAI => FirebaseAI.vertexAI(
+    auth: FirebaseAuth.instance,
+    appCheck: FirebaseAppCheck.instance,
+    location: 'global',
+  );
+
   final Function(String sentiment, String suggestion) onSentimentAnalyzed;
   final Function(String suggestion) onSuggestionGenerated;
   final Function(String error) onError;
+  final String myUserId;
 
-  // ===========================================
-  // AI 관련 변수들
-  // ===========================================
-  final GenerativeModel _model; // 이제 ChatSession 대신 GenerativeModel을 직접 사용
-  final List<Content> _externalHistory = []; // 실제 사용자 메시지 기록 (컨텍스트 전달용)
-  // ===========================================
-  // 생성자
-  // ===========================================
-  SentimentAnalyzer({required this.onSentimentAnalyzed, required this.onSuggestionGenerated, required this.onError})
-    : _model = FirebaseAI.vertexAI(
-        // 모델을 생성자에서 초기화, 상태 비저장 호출에 사용
-        auth: FirebaseAuth.instance,
-      ).generativeModel(model: 'gemini-2.0-flash');
+  final GenerativeModel _model;
+  final List<_HistoryTurn> _history = [];
 
-  // ===========================================
-  // 초기화 및 해제
-  // ===========================================
   Future<void> initialize(String chatRoomId) async {
     try {
-      final pastMessages = await MessageService().getRecentMessages(roomId: chatRoomId, limit: 20);
+      final pastMessages = await MessageService().getRecentMessages(
+        roomId: chatRoomId,
+        limit: _maxHistoryMessages,
+      );
 
-      var totalLength = 0;
-      const maxLength = 2000;
+      _history
+        ..clear()
+        ..addAll(
+          pastMessages.map(
+            (msg) =>
+                _HistoryTurn(isMine: msg.author.id == myUserId, text: msg.text),
+          ),
+        );
 
-      for (final msg in pastMessages) {
-        if (totalLength + msg.text.length <= maxLength) {
-          _externalHistory.add(Content('user', [TextPart(msg.text)])); // 실제 사용자 메시지만 추가
-          totalLength += msg.text.length;
-          debugPrint('메시지추가:${msg.text}');
-        } else {
-          break;
-        }
-      }
-      debugPrint('감정 분석기 초기화 완료: ${_externalHistory.length}개의 메시지 로드됨');
+      debugPrint('감정 분석기 초기화 완료: ${_history.length}개의 메시지 로드됨');
     } catch (e) {
       throw Exception('감정 분석기 초기화 실패: $e');
     }
   }
 
   void dispose() {
-    // 필요한 경우 리소스 정리
+    _history.clear();
   }
 
-  // ===========================================
-  // 감정 분석 메인 메서드
-  // ===========================================
   Future<void> analyzeSentiment(String message) async {
     try {
-      _externalHistory.add(Content('user', [TextPart(message)]));
+      final result = await _analyze(message);
+      debugPrint('감정 분석 결과: ${result.sentiment}');
+      debugPrint('제안 메시지: ${result.suggestion}');
 
-      final sentiment = await _performSentimentAnalysis(message);
-      debugPrint('감정 분석 결과: $sentiment');
-
-      String suggestion = '';
-      if (sentiment == 'negative') {
-        suggestion = await _generateSuggestion(message);
-        debugPrint('제안 메시지: $suggestion');
+      if (result.sentiment == 'negative' && result.suggestion.isNotEmpty) {
+        onSuggestionGenerated(result.suggestion);
       }
-      onSentimentAnalyzed(sentiment, suggestion);
+
+      _appendHistory(isMine: true, text: message);
+      onSentimentAnalyzed(result.sentiment, result.suggestion);
     } catch (e) {
       onError('감정 분석 중 오류 발생: $e');
     }
   }
 
-  // ===========================================
-  // 감정 분석 구현
-  // ===========================================
-  Future<String> _performSentimentAnalysis(String currentMessage) async {
-    const sentimentPrompt = '''
-    다음 대화 맥락을 참고하여 마지막 사용자 메시지의 대화 태도를 분석해주세요.
-    [대화 태도] 대화 중 갈등을 유발할 수 있는 메시지임
-    다음 중 하나로만 응답하세요:
-    - positive (긍정적)
-    - negative (부정적)
-    - neutral (중립적)
+  Future<SentimentParseResult> _analyze(String currentMessage) async {
+    final prompt = '''
+대화 맥락:
+${_formatTranscript()}
 
-    응답 형식: 단어 하나만 영어로 답하세요.
-    ''';
+지금 보낼 메시지:
+$currentMessage
+''';
 
-    // 상태 비저장 호출을 위해 필요한 컨텍스트와 프롬프트 조합
-    final List<Content> requestContent = [
-      // _externalHistory에서 최근 메시지들을 컨텍스트로 포함 (최대 10개)
-      ..._externalHistory.sublist((_externalHistory.length - 10).clamp(0, _externalHistory.length)),
-      Content.text(sentimentPrompt), // 감정 분석 지시 프롬프트
-      Content('user', [TextPart(currentMessage)]), // 현재 사용자 메시지
-    ];
-
-    final sentimentResponse = await _model.generateContent(requestContent);
-
-    final rawResponse = sentimentResponse.text?.trim() ?? '';
+    final response = await _model.generateContent([Content.text(prompt)]);
+    final rawResponse = response.text?.trim() ?? '';
     debugPrint('AI 감정 분석 응답: $rawResponse');
-
-    return _extractSentimentFromResponse(rawResponse);
+    return parseAnalysisResponse(rawResponse);
   }
 
-  String _extractSentimentFromResponse(String response) {
-    final lowerResponse = response.toLowerCase();
-
-    if (lowerResponse.contains('positive')) return 'positive';
-    if (lowerResponse.contains('negative')) return 'negative';
-    if (lowerResponse.contains('neutral')) return 'neutral';
-    if (lowerResponse.contains('긍정')) return 'positive';
-    if (lowerResponse.contains('부정')) return 'negative';
-    if (lowerResponse.contains('중립')) return 'neutral';
-    if (lowerResponse.contains('긍정적')) return 'positive';
-    if (lowerResponse.contains('부정적')) return 'negative';
-    if (lowerResponse.contains('중립적')) return 'neutral';
-
-    debugPrint('⚠️ 알 수 없는 감정 응답, 기본값 사용: $response');
-    return 'neutral';
-  }
-
-  // ===========================================
-  // 제안 메시지 생성
-  // ===========================================
-  Future<String> _generateSuggestion(String currentMessage) async {
-    try {
-      final suggestionPrompt = '''
-      마지막 메시지를 긍정적이거나 중립적 대화태도로 변경해주세요.
-      마지막 메시지: "$currentMessage"
-      응답 형식: 변경된 메시지
-      마지막 메시지의 메시지 길이와 비슷한 길이의 메시지로 변경하세요.
-      변경된 메시지만 출력하세요.
-      ''';
-
-      // 상태 비저장 호출을 위해 필요한 컨텍스트와 프롬프트 조합
-      final List<Content> requestContent = [
-        // _externalHistory에서 최근 메시지들을 컨텍스트로 포함 (최대 10개)
-        ..._externalHistory.sublist((_externalHistory.length - 10).clamp(0, _externalHistory.length)),
-        Content.text(suggestionPrompt), // 제안 지시 프롬프트
-        Content('user', [TextPart(currentMessage)]), // 현재 사용자 메시지
-      ];
-
-      final suggestionResponse = await _model.generateContent(requestContent);
-
-      final rawSuggestion = suggestionResponse.text?.trim() ?? '';
-      debugPrint('AI 제안 생성 응답: $rawSuggestion');
-
-      return rawSuggestion.isEmpty ? '제안 생성에 실패했습니다.' : rawSuggestion;
-    } catch (e) {
-      debugPrint('제안 생성 중 오류 발생: $e');
-      return '제안 생성 중 오류가 발생했습니다.';
+  void _appendHistory({required bool isMine, required String text}) {
+    _history.add(_HistoryTurn(isMine: isMine, text: text));
+    if (_history.length > _maxHistoryMessages) {
+      _history.removeRange(0, _history.length - _maxHistoryMessages);
     }
+  }
+
+  String _formatTranscript() {
+    if (_history.isEmpty) return '(이전 대화 없음)';
+    return _history
+        .map((turn) => '${turn.isMine ? '나' : '상대'}: ${turn.text}')
+        .join('\n');
   }
 }
