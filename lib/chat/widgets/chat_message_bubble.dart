@@ -34,15 +34,22 @@ class ChatMessageBubble extends StatelessWidget {
           spans.add(
             TextSpan(
               text: url,
-              style: const TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
-              recognizer: TapGestureRecognizer()..onTap = () => _launchURL(url, context),
+              style: const TextStyle(
+                color: Colors.blue,
+                decoration: TextDecoration.underline,
+              ),
+              recognizer:
+                  TapGestureRecognizer()
+                    ..onTap = () => _launchURL(url, context),
             ),
           );
         }
         return '';
       },
       onNonMatch: (String nonMatch) {
-        spans.add(TextSpan(text: nonMatch, style: const TextStyle(color: Colors.black)));
+        spans.add(
+          TextSpan(text: nonMatch, style: const TextStyle(color: Colors.black)),
+        );
         return '';
       },
     );
@@ -59,7 +66,9 @@ class ChatMessageBubble extends StatelessWidget {
       await launchUrl(uri);
     } else {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Unable to open link: $url')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Unable to open link: $url')));
     }
   }
 
@@ -68,7 +77,8 @@ class ChatMessageBubble extends StatelessWidget {
     final createdTime = DateTime.fromMillisecondsSinceEpoch(message.createdAt!);
     final formattedTime = DateFormat('HH:mm').format(createdTime);
     final isConverted = message.metadata?['converted'] as bool? ?? false;
-    final originalMessage = message.metadata?['originalMessage'] as String? ?? '';
+    final originalMessage =
+        message.metadata?['originalMessage'] as String? ?? '';
 
     final displayOriginalView = isOriginalMessageToggleEnabled;
     final displayOriginalToggle = isOriginalViewEnabled;
@@ -76,14 +86,20 @@ class ChatMessageBubble extends StatelessWidget {
     return Align(
       alignment: isMyMessage ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * ChatConfig.maxBubbleWidth),
+        constraints: BoxConstraints(
+          maxWidth:
+              MediaQuery.of(context).size.width * ChatConfig.maxBubbleWidth,
+        ),
         margin: const EdgeInsets.symmetric(
           vertical: ChatConfig.marginVertical,
           horizontal: ChatConfig.marginHorizontal,
         ),
         padding: const EdgeInsets.all(ChatConfig.padding),
         decoration: BoxDecoration(
-          color: isMyMessage ? ChatConfig.myMessageColor : ChatConfig.otherMessageColor,
+          color:
+              isMyMessage
+                  ? ChatConfig.myMessageColor
+                  : ChatConfig.otherMessageColor,
           borderRadius: BorderRadius.circular(ChatConfig.borderRadius),
         ),
         child: IntrinsicWidth(
@@ -95,7 +111,12 @@ class ChatMessageBubble extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   //TODO 여기 수정하면 될듯?
-                  Expanded(child: RichText(text: _buildClickableText(message.text, context), softWrap: true)),
+                  Expanded(
+                    child: RichText(
+                      text: _buildClickableText(message.text, context),
+                      softWrap: true,
+                    ),
+                  ),
                   const SizedBox(width: ChatConfig.spacing),
                   Column(
                     mainAxisSize: MainAxisSize.min,
@@ -105,7 +126,10 @@ class ChatMessageBubble extends StatelessWidget {
                         children: [
                           Text(
                             formattedTime,
-                            style: const TextStyle(fontSize: ChatConfig.timeFontSize, color: Colors.grey),
+                            style: const TextStyle(
+                              fontSize: ChatConfig.timeFontSize,
+                              color: Colors.grey,
+                            ),
                           ),
                           if (isConverted && displayOriginalView) ...[
                             const SizedBox(width: ChatConfig.iconSpacing),
@@ -115,14 +139,20 @@ class ChatMessageBubble extends StatelessWidget {
                                 child: Icon(
                                   Icons.auto_fix_high,
                                   size: ChatConfig.iconSize,
-                                  color: showOriginal ? Colors.grey : ChatConfig.iconColor,
+                                  color:
+                                      showOriginal
+                                          ? Colors.grey
+                                          : ChatConfig.iconColor,
                                 ),
                               ),
                             ] else ...[
                               Icon(
                                 Icons.auto_fix_high,
                                 size: ChatConfig.iconSize,
-                                color: showOriginal ? Colors.grey : ChatConfig.iconColor,
+                                color:
+                                    showOriginal
+                                        ? Colors.grey
+                                        : ChatConfig.iconColor,
                               ),
                             ],
                           ],
@@ -149,7 +179,12 @@ class ChatMessageBubble extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(ChatConfig.padding),
       decoration: const BoxDecoration(
-        border: Border(left: BorderSide(color: ChatConfig.iconColor, width: ChatConfig.borderWidth)),
+        border: Border(
+          left: BorderSide(
+            color: ChatConfig.iconColor,
+            width: ChatConfig.borderWidth,
+          ),
+        ),
         color: ChatConfig.originalMessageBackground,
       ),
       child: Column(
@@ -166,7 +201,10 @@ class ChatMessageBubble extends StatelessWidget {
           const SizedBox(height: ChatConfig.spacingSmall),
           Text(
             originalMessage,
-            style: const TextStyle(fontSize: ChatConfig.messageFontSize, color: Colors.black87),
+            style: const TextStyle(
+              fontSize: ChatConfig.messageFontSize,
+              color: Colors.black87,
+            ),
             softWrap: true,
           ),
         ],

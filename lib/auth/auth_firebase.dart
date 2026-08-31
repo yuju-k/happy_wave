@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:happy_wave/auth/domain/entities/member.dart';
 
 class AuthService {
@@ -15,11 +16,12 @@ class AuthService {
         email: email,
         password: password,
       );
-      if (credential.user == null)
+      if (credential.user == null) {
         throw FirebaseAuthException(
           code: "code",
           message: "회원가입 중 오류가 발생했습니다.",
         );
+      }
       var member = Member.of(uid: credential.user!.uid, email: email);
       await _firestore
           .collection(_usersCollection)
@@ -65,7 +67,7 @@ class AuthService {
             .collection(_usersCollection)
             .doc(_auth.currentUser?.uid)
             .get();
-    print(
+    debugPrint(
       "memberInstance : ${memberInstance.data()}, currentUser.id : ${_auth.currentUser?.uid}",
     );
     if (memberInstance.data() == null) {

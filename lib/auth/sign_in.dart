@@ -24,18 +24,12 @@ class _SignInPageState extends State<SignInPage> {
 
   // 텍스트 필드 스타일 정의
   InputDecoration _textFieldDecoration(String label) {
-    final theme = Theme.of(context).inputDecorationTheme;
     return InputDecoration(
       labelText: label,
-      border: theme.border,
-      enabledBorder: theme.enabledBorder,
-      focusedBorder: theme.focusedBorder,
-      errorBorder: theme.errorBorder,
-      focusedErrorBorder: theme.focusedErrorBorder,
-      fillColor: theme.fillColor,
-      filled: theme.filled,
-      // Add other properties from theme if needed
-    );
+      errorBorder: Theme.of(context).inputDecorationTheme.errorBorder,
+      focusedErrorBorder:
+          Theme.of(context).inputDecorationTheme.focusedErrorBorder,
+    ).applyDefaults(Theme.of(context).inputDecorationTheme);
   }
 
   // 텍스트 필드 위젯 생성
@@ -139,6 +133,7 @@ class _SignInPageState extends State<SignInPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(elevation: 0, backgroundColor: Colors.transparent),
       body: GestureDetector(
         onTap: () {
@@ -147,9 +142,9 @@ class _SignInPageState extends State<SignInPage> {
         child: SingleChildScrollView(
           child: Stack(
             children: [
-              _buildLogo(),
+              //_buildLogo(),
               Padding(
-                padding: const EdgeInsets.only(top: 200.0),
+                padding: const EdgeInsets.only(top: 50.0),
                 child: Center(
                   child: Container(
                     width: containerWidth,

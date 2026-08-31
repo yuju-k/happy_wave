@@ -120,18 +120,19 @@ class _SignUpPageState extends State<SignUpPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(elevation: 0, backgroundColor: Colors.transparent),
-      body: GestureDetector(
-        onTap: () {
-          FocusScope.of(context).unfocus();
-        },
-        child: SingleChildScrollView(
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        appBar: AppBar(elevation: 0, backgroundColor: Colors.transparent),
+        body: SingleChildScrollView(
           child: Stack(
             children: [
-              _buildLogo(),
+              //_buildLogo(),
               Padding(
-                padding: const EdgeInsets.only(top: 210.0),
+                padding: const EdgeInsets.only(top: 50.0),
                 child: Center(
                   child: Container(
                     width: 320.0,
